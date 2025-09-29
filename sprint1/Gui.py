@@ -1,7 +1,7 @@
 '''
 Ryan Phillips 
 UMKC CS 449 Sprint 1 GUI
-Languag: Python
+Language: Python
 GUI Framework: TKinter
 sprint0_gui.py
 '''

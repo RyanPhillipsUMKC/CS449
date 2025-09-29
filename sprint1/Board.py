@@ -1,10 +1,10 @@
 '''
 Ryan Phillips 
 UMKC CS 449 Sprint 1
-Board.py
+Board.py  This should probablly just be Game.py because it handles win conditions and other stuff besides the board struct
 '''
-
 from enum import Enum
+from collections import defaultdict
 
 # States that a single slot on the game board can be in
 class BoardSlotType(Enum):
@@ -19,57 +19,92 @@ class GameType(Enum):
 class PlayerType(Enum):
     Red = 1
     Blue = 2
-    
+
+class GameStateType(Enum):
+    Ongoing = 1
+    Red_Win = 2
+    Blue_Win = 3
+    Draw = 4
+
+# just use theese so ui can have context depenant reaction to trying to make a move thats invalid
+class MovefunctionReturnType(Enum):
+    InvalidSpot = 0
+    SpotAlreadyTaken = 1
+    GameIsAlreadyOver = 2
+    ValidMove = 3
+
 class GameBoard(object):
-    def __init__(self, game_type: GameType, board_size: int) -> None:
+    def __init__(self, game_type: GameType, board_size: int, starting_player_turn: PlayerType) -> None:
+        self.reset(game_type, board_size, starting_player_turn)
+
+    def reset(self, game_type: GameType, board_size: int, starting_player_turn: PlayerType) -> None:
         assert(board_size > 2)
         self.game_type = game_type
         self.size = board_size
+        self.turn = starting_player_turn
         self.state = [
             [BoardSlotType.Empty for  _ in range(board_size)]  
                 for _ in range(board_size)
             ]
+        self.soses_by_player = defaultdict(tuple)
+        self.game_state = GameStateType.Ongoing
 
-    def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> str:
+    def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MovefunctionReturnType:
         if row >= len(self.state):
-            return "Invalid spot on board."
+            return MovefunctionReturnType.InvalidSpot
         if col >= len(self.state):
-            return "Invalid spot on board."
-        if (self.state[row][col] != BoardSlotType.Empty):
-            return "Board spot has already been taken."
+            return MovefunctionReturnType.InvalidSpot
+        if self.state[row][col] != BoardSlotType.Empty:
+            return MovefunctionReturnType.SpotAlreadyTaken
+        if self.game_state != GameStateType.Ongoing:
+            return MovefunctionReturnType.GameIsAlreadyOver
         
+        # make move
         self.state[row][col] = slot_type
-        #self.check_for_sos(slot_type, row, col)
 
-    def check_for_sos(self, slot_type: BoardSlotType, row: int, col: int) -> tuple:
-        SOS_indexes = tuple()
+        # check for sos's and then cache them so ui know wheres to draw
+        sos_indexes_from_move = self.check_for_sos_from_move(slot_type, row, col)
+        self.soses_by_player[self.turn] += sos_indexes_from_move
+
+        #check for win conditons and upfates turns + game state
+        # simple game wins on first sos or else turn goes to other player
+        if self.game_type == GameType.Simple:
+            if len(sos_indexes_from_move) > 0:
+                self.game_state = GameStateType.Red_Win if self.turn == PlayerType.Red else GameStateType.Blue_Win
+            else:
+                self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
         
+        # general game wins on all spots full and winner has most sos's
+        # if game still ongoing swicth turns to other player iff no sos was made by current player
+        elif self.game_type == GameType.General:
+            are_all_spots_full = True
+            for row in self.state:
+                for col in row:
+                    if col == BoardSlotType.Empty:
+                        are_all_spots_full = False
+                        break
 
-        '''
-        # check all rows for sos
-        check_count = 0
-        for current_row in range(self.size):
-            check_count = 0
-            for current_col in range(self.size):
-                needs_s = check_count == 0 or check_count == 2
-                if needs_s and self.state[current_row][current_col] == BoardSlotType.S:
-                    check_count += 1
-                elif not needs_s and self.state[current_row][current_col] == BoardSlotType.O:
-                    check_count += 1
+            # check for game over and who won
+            if are_all_spots_full:
+                num_of_sos_for_red = len(self.soses_by_player[PlayerType.Red])
+                num_of_sos_for_blue = len(self.soses_by_player[PlayerType.Blue])
+                if num_of_sos_for_blue == num_of_sos_for_red:
+                    self.game_state = GameStateType.Draw
+                elif num_of_sos_for_blue > num_of_sos_for_red:
+                    self.game_state = GameStateType.Red_Win
                 else:
-                    check_count = 0
-                
-                # so we have an SOS, we now it was eneded on current_col and went two cols back
-                # we also can set check count to 1 because this could be the start of a new sos
-                if check_count == 3:
-                    current_SOS_tuple = ((current_row, current_col - 2), (current_row, current_col - 1), (current_row, current_col))
-                    SOS_indexes += (current_SOS_tuple,)
-                    check_count = 1
-        '''
+                    self.game_state = GameStateType.Blue_Win
+            else: # game still going
+                # in general game player turn only swaps if there was no sos made
+                if len(sos_indexes_from_move) == 0:
+                    self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
+                    
 
-        return SOS_indexes
-    
+        return MovefunctionReturnType.ValidMove
+
     # check on horizontal, vertical, and dignoal axis's for an sos gicen the current game move
+    # this returns a tuple of tuples of all the indexes invloved in the sos's made from the move
+    # e.g. (((0,0), (0,1), (0,2)), ...)
     def check_for_sos_from_move(self, slot_type: BoardSlotType, row: int, col: int) -> tuple:
         SOS_indexes = tuple()
 
@@ -134,11 +169,9 @@ class GameBoard(object):
         return SOS_indexes
 
 
-    
-
 if __name__ == "__main__":
-    g = GameBoard(GameType.General, 8)
-
+    g = GameBoard(GameType.Simple, 8, PlayerType.Blue)
+    
     g.make_move(BoardSlotType.S, 1, 1)
     g.make_move(BoardSlotType.O, 1, 2)
     g.make_move(BoardSlotType.S, 1, 3)
@@ -167,7 +200,7 @@ if __name__ == "__main__":
     g.make_move(BoardSlotType.S, 0, 7)
     g.make_move(BoardSlotType.O, 1, 6)
     g.make_move(BoardSlotType.S, 2, 5)
-
+    
     g.make_move(BoardSlotType.S, 7, 7)
     g.make_move(BoardSlotType.O, 6, 6)
     g.make_move(BoardSlotType.S, 5, 5)
@@ -190,19 +223,20 @@ if __name__ == "__main__":
         print("\n", end="")
 
     print()
+
     state = tuple()
     for x in range(g.size):
         for y in range(g.size):
             current_state = g.check_for_sos_from_move(g.state[x][y], x, y)
             state += current_state
             print(len(current_state), end=", ")
-            #if (len(current_state) > 0):
-            #    print(True, end=" , ")
-            #else:
-            #    print(False, end=", ")
         print("\n", end="")
 
     print(state)
     # have to divide by 3 because the moves are pre-set 
     # before checking the sos conditioins; in in real game they are checkedon the spot thats why its tripeled here
     print(f" Total SOS's = {int(len(state) / 3)}")
+
+    print(f"Game State = {g.game_state}")
+    print(f"Number of Red SOS's = {g.soses_by_player[PlayerType.Red]}")
+    print(f"Number of Blue SOS's = {g.soses_by_player[PlayerType.Blue]}")
