@@ -10,10 +10,15 @@ from tkinter import ttk
 
 from Board import *
 
+# TODO: Fix game win condiitons for draw in simple game on board full
+# TODO: fix radio buttons for S or O selections
+# TODO: add game state stats -> or push to next sprint
+
 # GameCellUIParameters
-# We map from the UI canvas element board cell to these parametrs so we can check game state and other ui utility things
+# We map from the UI canvas element board cell index to these parametrs 
+# so we can check game state and other ui utility things
 # i wish we had structs fo things like this
-# could just use a tuple bit i want named vars
+# could just use a tuple but i wanted named vars for this
 class GameCellUIParameters(object):
     def __init__(self):
         self.row = -1
@@ -21,7 +26,7 @@ class GameCellUIParameters(object):
         self.text_canvas_index = -1
 
 
-# Provides a gui in Tkinter to play the SOS game on
+# Provides a gui in Tkinter to play the SOS game
 # initilaizes the game within class
 class App(tk.Tk):
     def __init__(self):
@@ -29,7 +34,6 @@ class App(tk.Tk):
 
         # Setup Main App Config
         self.title('SOS Game')
-
         # default to half user screen size and allow resizing and scaling to an adjustable window
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -37,7 +41,10 @@ class App(tk.Tk):
         self.resizable(1, 1)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+        # on game window adjustment
+        self.bind("<Configure>", self.on_configure)
         
+
         # configure styles
         self.bg_color = "#181818"
         self.default_board_cell_size = 60
@@ -53,6 +60,7 @@ class App(tk.Tk):
         self.style.configure("TRadiobutton", relief="flat", borderwidth=0, font=('Helvetica', 16, 'bold'), foreground='white', background=self.bg_color)
         self.style.configure("TCheckbutton", font=('Helvetica', 16, 'bold'), foreground='white', background=self.bg_color)
 
+
         # main parent frame
         self.mainframe = ttk.Frame(self, style="TFrame")
         self.mainframe.grid(column=0, row=0, sticky="nsew")
@@ -60,6 +68,9 @@ class App(tk.Tk):
         self.mainframe.rowconfigure(1, weight=1)
         self.mainframe.rowconfigure(2, weight=0)
         self.mainframe.columnconfigure(0, weight=1)
+        # remove focus of focused itme when clicking empty space
+        self.mainframe.bind_all("<Button-1>", lambda event: event.widget.focus_set())
+
 
         # header frame
         self.header_frame = tk.Frame(self.mainframe, bg=self.bg_color, bd=1, height=100)
@@ -73,8 +84,7 @@ class App(tk.Tk):
         self.main_content_frame.grid(row=1, column=0, sticky="nsew", pady=6)
         self.main_content_frame.rowconfigure(0, weight=1)
         self.main_content_frame.columnconfigure([0, 1 ,2], weight=1, uniform="cols")
-        # remove focus
-        self.mainframe.bind_all("<Button-1>", lambda event: event.widget.focus_set())
+
 
         # left side game config frame
         self.leftside_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1, relief="flat")
@@ -134,9 +144,20 @@ class App(tk.Tk):
         self.reset_button = tk.Button(self.leftside_frame, text="Reset Game Button", command=self.reset_game, background=self.bg_color, foreground="White", relief="flat")
         self.reset_button.grid(row=5, column=0, sticky="w", pady=40)
 
-        # center game frame / main board frame
+
+        # Center game frame
         self.middle_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1)
         self.middle_frame.grid(column=1, row=0, sticky="nsew")
+
+        # Board Canvas
+        board_size = self.get_total_board_draw_size()
+        self.board_canvas = tk.Canvas(self.middle_frame, width=board_size[0], height=board_size[1], bg=self.bg_color, highlightthickness=0)
+        self.board_canvas.pack(pady=50)
+        #self.board_canvas.grid(row=0, column=0)
+        self.board_canvas.bind("<Button-1>", self.on_board_cell_click)
+        self.board_canvas.bind("<Motion>", self.on_board_hover_motion)
+        self.board_canvas.bind("<Leave>", self.on_board_mouse_leave_event)
+
 
         # right side game frame
         self.rightside_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1)
@@ -159,23 +180,12 @@ class App(tk.Tk):
 
         self.footer_info = ttk.Label(self.footer_frame, text="Ryan Phillips\nUMKC CS 449\nSprint 2 GUI", style="FooterInfo.TLabel")
         self.footer_info.grid(row=0, column=0)
-
-        
-        board_size = self.get_total_board_draw_size()
-        self.board_canvas = tk.Canvas(self.middle_frame, width=board_size[0], height=board_size[1], bg=self.bg_color, highlightthickness=0)
-        self.board_canvas.pack(pady=50)
-        #self.board_canvas.grid(row=0, column=0)
-        self.board_canvas.bind("<Button-1>", self.on_board_cell_click)
-        self.board_canvas.bind("<Motion>", self.on_board_hover_motion)
-        self.board_canvas.bind("<Leave>", self.on_board_mouse_leave_event)
         
 
+        # Initialize Game
         self.game_board = None
         self.canvas_board_cell_index_to_params = dict()
         self.reset_game()
-        
-        # on game window adjustment
-        self.bind("<Configure>", self.on_configure)
 
     def reset_game(self):
         board_dims = self.get_board_dims()
