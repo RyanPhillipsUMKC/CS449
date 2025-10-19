@@ -34,25 +34,27 @@ class MovefunctionReturnType(Enum):
     ValidMove = 3
 
 class GameBoard(object):
-    def __init__(self, game_type: GameType, board_size: int, starting_player_turn: PlayerType) -> None:
-        self.reset(game_type, board_size, starting_player_turn)
+    def __init__(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
+        self.reset(game_type, board_size_x, board_size_y, starting_player_turn)
 
-    def reset(self, game_type: GameType, board_size: int, starting_player_turn: PlayerType) -> None:
-        assert(board_size > 2)
+    def reset(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
+        assert(board_size_x > 2)
+        assert(board_size_y > 2)
         self.game_type = game_type
-        self.size = board_size
+        self.size_x = board_size_x
+        self.size_y = board_size_y
         self.turn = starting_player_turn
         self.state = [
-            [BoardSlotType.Empty for  _ in range(board_size)]  
-                for _ in range(board_size)
+            [BoardSlotType.Empty for _ in range(board_size_y)]  
+                for _ in range(board_size_x)
             ]
         self.soses_by_player = defaultdict(tuple)
         self.game_state = GameStateType.Ongoing
 
     def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MovefunctionReturnType:
-        if row >= len(self.state):
+        if row >= self.size_x:
             return MovefunctionReturnType.InvalidSpot
-        if col >= len(self.state):
+        if col >= self.size_y:
             return MovefunctionReturnType.InvalidSpot
         if self.state[row][col] != BoardSlotType.Empty:
             return MovefunctionReturnType.SpotAlreadyTaken
@@ -66,7 +68,7 @@ class GameBoard(object):
         sos_indexes_from_move = self.check_for_sos_from_move(slot_type, row, col)
         self.soses_by_player[self.turn] += sos_indexes_from_move
 
-        #check for win conditons and upfates turns + game state
+        # check for win conditons and upfates turns + game state
         # simple game wins on first sos or else turn goes to other player
         if self.game_type == GameType.Simple:
             if len(sos_indexes_from_move) > 0:
@@ -111,21 +113,21 @@ class GameBoard(object):
         if slot_type == BoardSlotType.O:
             # check for horizontal sos from an O move
             # if O we know it cant be a horizontal win if in the first or last col
-            if (not ((col == 0) or (col == (self.size - 1)))):
+            if (not ((col == 0) or (col == (self.size_y - 1)))):
                 # O has S to the left and right
                 if (self.state[row][col - 1] == BoardSlotType.S and self.state[row][col + 1] == BoardSlotType.S):
                     SOS_indexes += (((row, col - 1), (row, col), (row, col + 1)),)
             
             # check for vertical sos from an O move
             # if O we know it cant be a vertical sos if in the first or last row
-            if (not ((row == 0) or (row == (self.size - 1)))):
+            if (not ((row == 0) or (row == (self.size_x - 1)))):
                 # O has S to the left and right
                 if (self.state[row - 1][col] == BoardSlotType.S and self.state[row + 1][col] == BoardSlotType.S):
                     SOS_indexes += (((row - 1, col), (row, col), (row + 1, col)),)
 
             # check for diagnoal sos from O move
             # if O we know it cant be a diagnol sos if in the first or last row or in the first or last col
-            if (not ((col == 0) or (col == (self.size - 1)))) and (not ((row == 0) or (row == (self.size - 1)))):
+            if (not ((col == 0) or (col == (self.size_y - 1)))) and (not ((row == 0) or (row == (self.size_x - 1)))):
                 # O has S to the left, down spot and right, up slot
                 if (self.state[row - 1][col - 1] == BoardSlotType.S and self.state[row + 1][col + 1] == BoardSlotType.S):
                     SOS_indexes += (((row - 1, col - 1), (row, col), (row + 1, col + 1)),)
@@ -140,7 +142,7 @@ class GameBoard(object):
             if (col >= 2) and self.state[row][col - 1] == BoardSlotType.O and self.state[row][col - 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row, col - 1), (row, col - 2)),)
             # check right two slots of us
-            if (col <= self.size - 3) and self.state[row][col + 1] == BoardSlotType.O and self.state[row][col + 2] == BoardSlotType.S:
+            if (col <= self.size_y - 3) and self.state[row][col + 1] == BoardSlotType.O and self.state[row][col + 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row, col + 1), (row, col + 2)),)
 
             # check for vertical sos from an S Move
@@ -148,7 +150,7 @@ class GameBoard(object):
             if (row >= 2) and self.state[row - 1][col] == BoardSlotType.O and self.state[row - 2][col] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row - 1, col), (row - 2, col)),)
             # check up two slots of us
-            if (row <= self.size - 3) and self.state[row + 1][col] == BoardSlotType.O and self.state[row + 2][col] == BoardSlotType.S:
+            if (row <= self.size_x - 3) and self.state[row + 1][col] == BoardSlotType.O and self.state[row + 2][col] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row + 1, col), (row + 2, col)),)
 
             # check for diagnol sos from an S Move
@@ -156,19 +158,19 @@ class GameBoard(object):
             if (row >= 2) and (col >= 2) and self.state[row - 1][col - 1] == BoardSlotType.O and self.state[row - 2][col - 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row - 1, col - 1), (row - 2, col - 2)),)
             # check up and right two slots of us
-            if (row >= 2) and (col <= self.size - 3) and self.state[row - 1][col + 1] == BoardSlotType.O and self.state[row - 2][col + 2] == BoardSlotType.S:
+            if (row >= 2) and (col <= self.size_y - 3) and self.state[row - 1][col + 1] == BoardSlotType.O and self.state[row - 2][col + 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row - 1, col + 1), (row - 2, col + 2)),)
             # check down and left two slots of us
-            if (row <= self.size - 3) and (col >= 2) and self.state[row + 1][col - 1] == BoardSlotType.O and self.state[row + 2][col - 2] == BoardSlotType.S:
+            if (row <= self.size_x - 3) and (col >= 2) and self.state[row + 1][col - 1] == BoardSlotType.O and self.state[row + 2][col - 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row - 1, col + 1), (row - 2, col + 2)),)
             # check down and right two slots of us
-            if (row <= self.size - 3) and (col <= self.size - 3) and self.state[row + 1][col + 1] == BoardSlotType.O and self.state[row + 2][col + 2] == BoardSlotType.S:
+            if (row <= self.size_x - 3) and (col <= self.size_y - 3) and self.state[row + 1][col + 1] == BoardSlotType.O and self.state[row + 2][col + 2] == BoardSlotType.S:
                 SOS_indexes += (((row, col), (row + 1, col + 1), (row + 2, col + 2)),)
             
         return SOS_indexes
     
     def get_slot_type_for_spot(self, row, col):
-        if row >= 0 and row < self.size and col >= 0 and col < self.size:
+        if row >= 0 and row < self.size_x and col >= 0 and col < self.size_y:
             return self.state[row][col]
         else:
             return BoardSlotType.Empty
@@ -178,7 +180,7 @@ class GameBoard(object):
 
 
 if __name__ == "__main__":
-    g = GameBoard(GameType.Simple, 8, PlayerType.Blue)
+    g = GameBoard(GameType.Simple, 8, 8, PlayerType.Blue)
     
     g.make_move(BoardSlotType.S, 1, 1)
     g.make_move(BoardSlotType.O, 1, 2)
@@ -233,8 +235,8 @@ if __name__ == "__main__":
     print()
 
     state = tuple()
-    for x in range(g.size):
-        for y in range(g.size):
+    for x in range(g.size_x):
+        for y in range(g.size_y):
             current_state = g.check_for_sos_from_move(g.state[x][y], x, y)
             state += current_state
             print(len(current_state), end=", ")

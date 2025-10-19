@@ -21,10 +21,8 @@ class GameCellUIParameters(object):
         self.text_canvas_index = -1
 
 
-'''
-For now this is just a basic GUI to mock how to SOS game GUI will look
-There is no state handeling in this yet
-'''
+# Provides a gui in Tkinter to play the SOS game on
+# initilaizes the game within class
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -42,9 +40,9 @@ class App(tk.Tk):
         
         # configure styles
         self.bg_color = "#181818"
-        self.board_cell_size = 60
+        self.default_board_cell_size = 60
+        self.default_board_dims = 5
         self.board_line_width = 3
-        self.turn_text = ("Red Player's turn to move", "Blue Player's turn to move")
 
         self.style = ttk.Style(self)
         self.style.theme_use("clam")
@@ -90,12 +88,12 @@ class App(tk.Tk):
         self.board_size_config_frame.grid(row=1, column=0, sticky="w", pady=5)
         self.board_size_config_text = ttk.Label(self.board_size_config_frame, text="Board size: ", style="FooterInfo.TLabel", relief="flat")
         self.board_size_config_text.grid(column=0, row=0, sticky="nsw")
-        self.board_size_config_selection_x = tk.IntVar(value=5)
+        self.board_size_config_selection_x = tk.IntVar(value=self.default_board_dims)
         self.board_size_config_entry_x = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_x, style="TEntry", width=5)
         self.board_size_config_entry_x.grid(column=1, row=0, sticky="w")
         self.board_size_config_text_seperator = ttk.Label(self.board_size_config_frame, text="x", style="FooterInfo.TLabel", relief="flat")
         self.board_size_config_text_seperator.grid(column=2, row=0, sticky="nsw")
-        self.board_size_config_selection_y = tk.IntVar(value=5)
+        self.board_size_config_selection_y = tk.IntVar(value=self.default_board_dims)
         self.board_size_config_entry_y = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_y, style="TEntry", width=5)
         self.board_size_config_entry_y.grid(column=3, row=0, sticky="w")
 
@@ -144,6 +142,15 @@ class App(tk.Tk):
         self.rightside_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1)
         self.rightside_frame.grid(column=2, row=0, sticky="nsew")
 
+        # Game state
+        self.game_state_text = ttk.Label(self.rightside_frame, text="Game State", style="FooterInfo.TLabel", relief="flat")
+        self.game_state_text.grid(row=0, column=0, sticky="w", pady=15)
+
+        self.game_state_current_turn_text_player_type = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel", foreground="Red")
+        self.game_state_current_turn_text_player_type.grid(row=1, column=0, sticky="w", pady=5)
+        self.game_state_current_turn_text = ttk.Label(self.rightside_frame, text=" player's turn to move", style="FooterInfo.TLabel")
+        self.game_state_current_turn_text.grid(row=1, column=1, sticky="w", pady=5)
+
 
         # footer frame
         self.footer_frame = tk.Frame(self.mainframe, bg=self.bg_color, bd=1, height=75)
@@ -155,35 +162,48 @@ class App(tk.Tk):
 
         
         board_size = self.get_total_board_draw_size()
-        self.board_canvas = tk.Canvas(self.middle_frame, width=board_size, height=board_size, bg=self.bg_color, highlightthickness=0)
-        self.board_canvas.pack()
+        self.board_canvas = tk.Canvas(self.middle_frame, width=board_size[0], height=board_size[1], bg=self.bg_color, highlightthickness=0)
+        self.board_canvas.pack(pady=50)
         #self.board_canvas.grid(row=0, column=0)
         self.board_canvas.bind("<Button-1>", self.on_board_cell_click)
         self.board_canvas.bind("<Motion>", self.on_board_hover_motion)
         self.board_canvas.bind("<Leave>", self.on_board_mouse_leave_event)
         
-        self.current_turn_text = ttk.Label(self.rightside_frame, text=self.turn_text[0], font=("Segoe UI", 12), style="FooterInfo.TLabel")
-        self.current_turn_text.grid(row=4, column=0, sticky="w", padx=8, pady=(6, 10))
 
-        self.game_board = GameBoard(GameType.General, self.get_board_dims(), PlayerType.Blue)
+        self.game_board = None
         self.canvas_board_cell_index_to_params = dict()
-
         self.reset_game()
         
         # on game window adjustment
         self.bind("<Configure>", self.on_configure)
 
-    def get_total_board_draw_size(self):
-        return self.board_cell_size * self.get_board_dims()
-
     def reset_game(self):
-        self.game_board.reset(
-            GameType.Simple if self.game_mode_config_selection.get() == "1" else GameType.General, 
-            self.get_board_dims(), 
-            PlayerType.Red)
+        board_dims = self.get_board_dims()
+
+        # only allocate the game once
+        if self.game_board is None:
+            self.game_board = GameBoard(
+                GameType.Simple if self.game_mode_config_selection.get() == "1" else GameType.General, 
+                board_dims[0],
+                board_dims[1] ,
+                PlayerType.Red)
+        else:
+            self.game_board.reset(
+                GameType.Simple if self.game_mode_config_selection.get() == "1" else GameType.General, 
+                board_dims[0],
+                board_dims[1] ,
+                PlayerType.Red)
         
-        self.current_turn_text.config(text=self.turn_text[0])
+        self.update_turn_text()
         self._draw_board()
+    
+    def update_turn_text(self):
+        turn = self.game_board.get_turn()
+        if turn == PlayerType.Red:
+            self.game_state_current_turn_text_player_type.config(text="Red", foreground="red")
+        else:
+            self.game_state_current_turn_text_player_type.config(text="Blue", foreground="blue")
+
 
     def on_board_hover_motion(self, event):
         print(f"Canvas motion event {event}, {event.widget}")
@@ -247,6 +267,7 @@ class App(tk.Tk):
         
         if move_function_return_type != MovefunctionReturnType.ValidMove:
             # TODO: could display popups here ??
+            print("Failied move!!!!")
             return
 
         # update cell ui state
@@ -257,7 +278,7 @@ class App(tk.Tk):
             self.reset_game()
         else:
             self._clear_hover_state()
-            self.current_turn_text.config(text=self.turn_text[self.game_board.get_turn().value - 1])
+            self.update_turn_text()
 
 
     # find closest board cell spot from tkinter event
@@ -276,46 +297,58 @@ class App(tk.Tk):
     def _draw_board(self):
         self.board_canvas.delete("all")
 
+        board_dims = self.get_board_dims()
+        cell_size = self.get_cell_size()
+
         self.canvas_board_cell_index_to_params = dict()
         # draw board cell and init their params
-        for row in range(self.get_board_dims()):
-            for col in range(self.get_board_dims()):
+        for row in range(board_dims[0]):
+            for col in range(board_dims[1]):
                 cell_parameters = GameCellUIParameters()
                 cell_parameters.row = row
                 cell_parameters.col = col
                 
                 # cells + hover rexts
-                x_space = row * self.board_cell_size
-                y_space = col * self.board_cell_size
+                y_space = row * cell_size
+                x_space = col * cell_size
                 cell_index = self.board_canvas.create_rectangle(
                     x_space, 
                     y_space, 
-                    x_space + self.board_cell_size, 
-                    y_space + self.board_cell_size,
+                    x_space + cell_size, 
+                    y_space + cell_size,
                     tags="cell",
                     fill=self.bg_color, outline=self.bg_color)
 
                 # state text (s or o)
                 cell_parameters.text_canvas_index = self.board_canvas.create_text(
-                    x_space + (self.board_cell_size * 0.5), y_space + (self.board_cell_size * 0.5), text="", fill="white")
+                    x_space + (cell_size * 0.5), y_space + (cell_size * 0.5), text="", fill="white")
 
                 self.canvas_board_cell_index_to_params[cell_index] = cell_parameters
 
         total_board_draw_size = self.get_total_board_draw_size()
         # Vertical lines
-        for i in range(1, self.get_board_dims()):
-            x = i * self.board_cell_size
-            self.board_canvas.create_line(x, 0, x, total_board_draw_size, width=self.board_line_width, fill="White")
+        for i in range(1, board_dims[1]):
+            x = i * cell_size
+            self.board_canvas.create_line(x, 0, x, total_board_draw_size[0], width=self.board_line_width, fill="White")
         # Horizontal lines
-        for i in range(1, self.get_board_dims()):
-            y = i * self.board_cell_size
-            self.board_canvas.create_line(0, y, total_board_draw_size, y, width=self.board_line_width, fill="White")
+        for i in range(1, board_dims[0]):
+            y = i * cell_size
+            self.board_canvas.create_line(0, y, total_board_draw_size[1], y, width=self.board_line_width, fill="White")
 
     def on_configure(self, event):
         print(f"TKinter Configuration event: {event}")
 
     def get_board_dims(self):
-        return (self.board_size_config_selection_x.get(), self.board_size_config_selection_y.get())[0]
+        return (self.board_size_config_selection_x.get(), self.board_size_config_selection_y.get())
+    
+    def get_cell_size(self):
+        board_dims = self.get_board_dims()
+        return self.default_board_cell_size * (self.default_board_dims / max(board_dims))
+    
+    def get_total_board_draw_size(self):
+        board_dims = self.get_board_dims()
+        cell_size = self.get_cell_size()
+        return ((cell_size * board_dims[0]), (cell_size * board_dims[1]))
 
 # run main app loop
 if __name__ == "__main__":
