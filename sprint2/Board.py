@@ -1,6 +1,6 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 1
+UMKC CS 449 Sprint 2
 Board.py  This should probablly just be Game.py because it handles win conditions and other stuff besides the board struct
 '''
 from enum import Enum
@@ -166,6 +166,15 @@ class GameBoard(object):
                 SOS_indexes += (((row, col), (row + 1, col + 1), (row + 2, col + 2)),)
             
         return SOS_indexes
+    
+    def get_slot_type_for_spot(self, row, col):
+        if row >= 0 and row < self.size and col >= 0 and col < self.size:
+            return self.state[row][col]
+        else:
+            return BoardSlotType.Empty
+        
+    def get_turn(self):
+        return self.turn
 
 
 if __name__ == "__main__":
