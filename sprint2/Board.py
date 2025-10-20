@@ -68,26 +68,22 @@ class GameBoard(object):
         sos_indexes_from_move = self.check_for_sos_from_move(slot_type, row, col)
         self.soses_by_player[self.turn] += sos_indexes_from_move
 
-        # check for win conditons and upfates turns + game state
+        # check for win conditons and updates turns + game state
         # simple game wins on first sos or else turn goes to other player
+        # draw on board full and no sos made
         if self.game_type == GameType.Simple:
             if len(sos_indexes_from_move) > 0:
                 self.game_state = GameStateType.Red_Win if self.turn == PlayerType.Red else GameStateType.Blue_Win
+            elif self.are_all_spots_full():
+                self.game_state = GameStateType.Draw
             else:
                 self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
         
-        # general game wins on all spots full and winner has most sos's
+        # general game wins on all spots full and winner has most sos's, draw on eaul sos's
         # if game still ongoing swicth turns to other player iff no sos was made by current player
         elif self.game_type == GameType.General:
-            are_all_spots_full = True
-            for row in self.state:
-                for col in row:
-                    if col == BoardSlotType.Empty:
-                        are_all_spots_full = False
-                        break
-
             # check for game over and who won
-            if are_all_spots_full:
+            if self.are_all_spots_full():
                 num_of_sos_for_red = len(self.soses_by_player[PlayerType.Red])
                 num_of_sos_for_blue = len(self.soses_by_player[PlayerType.Blue])
                 if num_of_sos_for_blue == num_of_sos_for_red:
@@ -102,6 +98,13 @@ class GameBoard(object):
                     self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
                     
         return MovefunctionReturnType.ValidMove
+    
+    def are_all_spots_full(self):
+        for row in self.state:
+            for col in row:
+                if col == BoardSlotType.Empty:
+                    return False
+        return True
 
     # check on horizontal, vertical, and dignoal axis's for an sos gicen the current game move
     # this returns a tuple of tuples of all the indexes invloved in the sos's made from the move

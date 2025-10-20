@@ -10,8 +10,7 @@ from tkinter import ttk
 
 from Board import *
 
-# TODO: Fix game win condiitons for draw in simple game on board full
-# TODO: fix radio buttons for S or O selections
+# TODO: tests both game and ui
 # TODO: add game state stats -> or push to next sprint
 
 # GameCellUIParameters
@@ -112,10 +111,10 @@ class App(tk.Tk):
         self.game_mode_config_frame.grid(row=2, column=0, sticky="w", pady=5)
         self.game_mode_config_text = ttk.Label(self.game_mode_config_frame, text="Game Mode: ", style="FooterInfo.TLabel", relief="flat")
         self.game_mode_config_text.grid(column=0, row=1, sticky="nsw")
-        self.game_mode_config_selection = tk.StringVar(self.game_mode_config_frame, "1")
-        self.game_mode_config_button_simple_game = ttk.Radiobutton(self.game_mode_config_frame, text='Simple', value='1', variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
+        self.game_mode_config_selection = tk.IntVar(self.game_mode_config_frame, 1)
+        self.game_mode_config_button_simple_game = ttk.Radiobutton(self.game_mode_config_frame, text='Simple', value=1, variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
         self.game_mode_config_button_simple_game.grid(column=1, row=1, sticky="w")
-        self.game_mode_config_button_general_game = ttk.Radiobutton(self.game_mode_config_frame, text='General', value='2', variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
+        self.game_mode_config_button_general_game = ttk.Radiobutton(self.game_mode_config_frame, text='General', value=2, variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
         self.game_mode_config_button_general_game.grid(column=2, row=1, sticky="w")
 
         # Red Player Current Config
@@ -123,10 +122,10 @@ class App(tk.Tk):
         self.red_player_config_frame.grid(row=3, column=0, sticky="w", pady=5)
         self.red_player_config_text = ttk.Label(self.red_player_config_frame, text="Red Player: ", style="FooterInfo.TLabel", relief="flat")
         self.red_player_config_text.grid(column=0, row=1, sticky="nsw")
-        self.red_player_config_selection = tk.StringVar(self.red_player_config_frame, "S")
-        self.red_player_config_button_S = ttk.Radiobutton(self.red_player_config_frame, text='S', value='S', variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
+        self.red_player_config_selection = tk.IntVar(self.red_player_config_frame, 1)
+        self.red_player_config_button_S = ttk.Radiobutton(self.red_player_config_frame, text='S', value=1, variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
         self.red_player_config_button_S.grid(column=1, row=1, sticky="w")
-        self.red_player_config_button_O = ttk.Radiobutton(self.red_player_config_frame, text='O', value='O', variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
+        self.red_player_config_button_O = ttk.Radiobutton(self.red_player_config_frame, text='O', value=2, variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
         self.red_player_config_button_O.grid(column=2, row=1, sticky="w")
         
         # Blue Player Current Config
@@ -134,10 +133,10 @@ class App(tk.Tk):
         self.blue_player_config_frame.grid(row=4, column=0, sticky="w", pady=5)
         self.blue_player_config_text = ttk.Label(self.blue_player_config_frame, text="Blue Player: ", style="FooterInfo.TLabel", relief="flat")
         self.blue_player_config_text.grid(column=0, row=1, sticky="nsw")
-        self.blue_player_config_selection = tk.StringVar(self.blue_player_config_frame, "S")
-        self.blue_player_config_button_S = ttk.Radiobutton(self.blue_player_config_frame, text='S', value='S', variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
+        self.blue_player_config_selection = tk.IntVar(self.blue_player_config_frame, 1)
+        self.blue_player_config_button_S = ttk.Radiobutton(self.blue_player_config_frame, text='S', value=1, variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
         self.blue_player_config_button_S.grid(column=1, row=1, sticky="w")
-        self.blue_player_config_button_O = ttk.Radiobutton(self.blue_player_config_frame, text='O', value='O', variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
+        self.blue_player_config_button_O = ttk.Radiobutton(self.blue_player_config_frame, text='O', value=2, variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
         self.blue_player_config_button_O.grid(column=2, row=1, sticky="w")
 
         # Reset game config button
@@ -193,13 +192,13 @@ class App(tk.Tk):
         # only allocate the game once
         if self.game_board is None:
             self.game_board = GameBoard(
-                GameType.Simple if self.game_mode_config_selection.get() == "1" else GameType.General, 
+                GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General, 
                 board_dims[0],
                 board_dims[1] ,
                 PlayerType.Red)
         else:
             self.game_board.reset(
-                GameType.Simple if self.game_mode_config_selection.get() == "1" else GameType.General, 
+                GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General, 
                 board_dims[0],
                 board_dims[1] ,
                 PlayerType.Red)
@@ -258,14 +257,14 @@ class App(tk.Tk):
         turn_text = ""
 
         if turn == PlayerType.Red:
-            if self.red_player_config_selection.get() == "S":
+            if self.red_player_config_selection.get() == 1:
                 turn_slot_type = BoardSlotType.S
                 turn_text = "S"
             else:
                 turn_slot_type = BoardSlotType.O
                 turn_text = "O"
         else:
-            if self.blue_player_config_selection.get() == "S":
+            if self.blue_player_config_selection.get() == 1:
                 turn_slot_type = BoardSlotType.S
                 turn_text = "S"
             else:
