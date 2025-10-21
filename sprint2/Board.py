@@ -172,6 +172,7 @@ class GameBoard(object):
             
         return SOS_indexes
     
+    # Getters 
     def get_slot_type_for_spot(self, row, col):
         if row >= 0 and row < self.size_x and col >= 0 and col < self.size_y:
             return self.state[row][col]
@@ -180,6 +181,10 @@ class GameBoard(object):
         
     def get_turn(self):
         return self.turn
+    def get_board_size_x(self):
+        return self.size_x
+    def get_board_size_y(self):
+        return self.size_y
 
 
 if __name__ == "__main__":

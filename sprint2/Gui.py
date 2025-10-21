@@ -3,14 +3,13 @@ Ryan Phillips
 UMKC CS 449 Sprint 2 GUI
 Language: Python
 GUI Framework: TKinter
-sprint0_gui.py
+Gui.py
 '''
 import tkinter as tk
 from tkinter import ttk
 
 from Board import *
 
-# TODO: tests both game and ui
 # TODO: add game state stats -> or push to next sprint
 
 # GameCellUIParameters
@@ -166,10 +165,18 @@ class App(tk.Tk):
         self.game_state_text = ttk.Label(self.rightside_frame, text="Game State", style="FooterInfo.TLabel", relief="flat")
         self.game_state_text.grid(row=0, column=0, sticky="w", pady=15)
 
-        self.game_state_current_turn_text_player_type = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel", foreground="Red")
-        self.game_state_current_turn_text_player_type.grid(row=1, column=0, sticky="w", pady=5)
-        self.game_state_current_turn_text = ttk.Label(self.rightside_frame, text=" player's turn to move", style="FooterInfo.TLabel")
-        self.game_state_current_turn_text.grid(row=1, column=1, sticky="w", pady=5)
+        self.game_state_current_game_mode = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel")
+        self.game_state_current_game_mode.grid(row=1, column=0, sticky="w", pady=5)
+
+        self.game_state_current_board_size = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel")
+        self.game_state_current_board_size.grid(row=2, column=0, sticky="w", pady=5)
+
+        self.rightside_frame_turn_frame = tk.Frame(self.rightside_frame, bg=self.bg_color, bd=1)
+        self.rightside_frame_turn_frame.grid(column=0, row=3, sticky="nsew")
+        self.game_state_current_turn_text_player_type = ttk.Label(self.rightside_frame_turn_frame, text="", style="FooterInfo.TLabel", foreground="Red")
+        self.game_state_current_turn_text_player_type.grid(row=0, column=0, sticky="w", pady=10)
+        self.game_state_current_turn_text = ttk.Label(self.rightside_frame_turn_frame, text=" player's turn to move", style="FooterInfo.TLabel")
+        self.game_state_current_turn_text.grid(row=0, column=1, sticky="w")
 
 
         # footer frame
@@ -188,30 +195,25 @@ class App(tk.Tk):
 
     def reset_game(self):
         board_dims = self.get_board_dims()
+        game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General  
 
         # only allocate the game once
         if self.game_board is None:
-            self.game_board = GameBoard(
-                GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General, 
-                board_dims[0],
-                board_dims[1] ,
-                PlayerType.Red)
+            self.game_board = GameBoard(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
         else:
-            self.game_board.reset(
-                GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General, 
-                board_dims[0],
-                board_dims[1] ,
-                PlayerType.Red)
+            self.game_board.reset(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
         
+        self.game_state_current_game_mode.configure(text=f"Current Game Mode: {game_mode.name}")
+        self.game_state_current_board_size.configure(text=f"Current Board Size: {board_dims[0]}x{board_dims[1]}")
         self.update_turn_text()
         self._draw_board()
     
     def update_turn_text(self):
         turn = self.game_board.get_turn()
         if turn == PlayerType.Red:
-            self.game_state_current_turn_text_player_type.config(text="Red", foreground="red")
+            self.game_state_current_turn_text_player_type.configure(text="Red", foreground="red")
         else:
-            self.game_state_current_turn_text_player_type.config(text="Blue", foreground="blue")
+            self.game_state_current_turn_text_player_type.configure(text="Blue", foreground="blue")
 
 
     def on_board_hover_motion(self, event):
