@@ -39,11 +39,10 @@ class GameBoard(object):
         self.reset(game_type, board_size_x, board_size_y, starting_player_turn)
 
     def reset(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
-        assert(board_size_x > 2)
-        assert(board_size_y > 2)
         self.game_type = game_type
-        self.size_x = board_size_x
-        self.size_y = board_size_y
+        # keep board in a valid size (sos can be made in either direction so >= 3)
+        self.size_x = board_size_x if board_size_x >= 3 else 3
+        self.size_y = board_size_y if board_size_y >= 3 else 3
         self.turn = starting_player_turn
         self.state = [
             [BoardSlotType.Empty for _ in range(board_size_y)]  
