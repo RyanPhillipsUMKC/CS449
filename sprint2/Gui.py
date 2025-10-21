@@ -6,9 +6,9 @@ GUI Framework: TKinter
 Gui.py
 '''
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
-from Board import *
+from Game import *
 
 # TODO: add game state stats -> or push to next sprint
 
@@ -92,17 +92,18 @@ class App(tk.Tk):
         self.game_config_text.grid(row=0, column=0, sticky="w", pady=15)
 
         # Board size config
+        validate_callback = self.register(self.validate_board_size_entry)
         self.board_size_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0)
         self.board_size_config_frame.grid(row=1, column=0, sticky="w", pady=5)
         self.board_size_config_text = ttk.Label(self.board_size_config_frame, text="Board size: ", style="FooterInfo.TLabel", relief="flat")
         self.board_size_config_text.grid(column=0, row=0, sticky="nsw")
         self.board_size_config_selection_x = tk.IntVar(value=self.default_board_dims)
-        self.board_size_config_entry_x = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_x, style="TEntry", width=5)
+        self.board_size_config_entry_x = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_x, style="TEntry", width=5, validate='key', validatecommand=(validate_callback, '%P'))
         self.board_size_config_entry_x.grid(column=1, row=0, sticky="w")
         self.board_size_config_text_seperator = ttk.Label(self.board_size_config_frame, text="x", style="FooterInfo.TLabel", relief="flat")
         self.board_size_config_text_seperator.grid(column=2, row=0, sticky="nsw")
         self.board_size_config_selection_y = tk.IntVar(value=self.default_board_dims)
-        self.board_size_config_entry_y = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_y, style="TEntry", width=5)
+        self.board_size_config_entry_y = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_y, style="TEntry", width=5, validate='key', validatecommand=(validate_callback, '%P'))
         self.board_size_config_entry_y.grid(column=3, row=0, sticky="w")
 
         # Game mode config
@@ -193,8 +194,17 @@ class App(tk.Tk):
         self.canvas_board_cell_index_to_params = dict()
         self.reset_game()
 
+    def validate_board_size_entry(self, value):
+        return value == "" or value.isdigit()
+
     def reset_game(self):
         board_dims = self.get_board_dims()
+
+        # only allow games with valid dims
+        if board_dims[0] <= 2 or board_dims[0] > 10 or board_dims[1] <= 2 or board_dims[1] > 10:
+            messagebox.showerror("Invalid Game Config", message="Board dimensions must be > 2 and <= 10")
+            return
+        
         game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General  
 
         # only allocate the game once
@@ -285,7 +295,7 @@ class App(tk.Tk):
         self.board_canvas.itemconfigure(cell_params.text_canvas_index, text=turn_text)
 
         # check and display game state iff needed
-        if self.game_board.game_state != GameStateType.Ongoing:
+        if self.game_board.get_game_state() != GameStateType.Ongoing:
             self.reset_game()
         else:
             self._clear_hover_state()

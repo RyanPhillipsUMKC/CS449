@@ -1,7 +1,8 @@
 '''
 Ryan Phillips 
 UMKC CS 449 Sprint 2
-Board.py  This should probablly just be Game.py because it handles win conditions and other stuff besides the board struct
+Game.py
+Implements the game and board backend
 '''
 from enum import Enum
 from collections import defaultdict
@@ -172,7 +173,8 @@ class GameBoard(object):
             
         return SOS_indexes
     
-    # Getters 
+    # Getters
+
     def get_slot_type_for_spot(self, row, col):
         if row >= 0 and row < self.size_x and col >= 0 and col < self.size_y:
             return self.state[row][col]
@@ -185,6 +187,10 @@ class GameBoard(object):
         return self.size_x
     def get_board_size_y(self):
         return self.size_y
+    def get_game_state(self):
+        return self.game_state
+    def get_game_type(self):
+        return self.game_type
 
 
 if __name__ == "__main__":
