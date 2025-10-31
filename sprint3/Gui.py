@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from Game import *
+from SimpleGame import *
+from GeneralGame import *
 
 # TODO: add game state stats -> or push to next sprint
 
@@ -208,10 +210,10 @@ class App(tk.Tk):
         game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General  
 
         # only allocate the game once
-        if self.game_board is None:
-            self.game_board = GameBoard(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
+        if game_mode == GameType.Simple:
+            self.game_board = SimpleGame(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
         else:
-            self.game_board.reset(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
+            self.game_board = GeneralGame(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
         
         self.game_state_current_game_mode.configure(text=f"Current Game Mode: {game_mode.name}")
         self.game_state_current_board_size.configure(text=f"Current Board Size: {board_dims[0]}x{board_dims[1]}")
@@ -253,7 +255,7 @@ class App(tk.Tk):
              self.board_canvas.itemconfigure(id, fill=self.bg_color)
 
     def on_board_cell_click(self, event) -> None:
-        print(f"Canvas clicked on event {event}, {event.widget}")
+        #print(f"Canvas clicked on event {event}, {event.widget}")
 
         closest_cell_id = self._get_closest_cell_spot_index_from_event(event)
 
@@ -317,7 +319,6 @@ class App(tk.Tk):
             first_spot_id = self._get_cell_spot_id_from_row_col(sos_indexes[0][0], sos_indexes[0][1])
             last_spot_id = self._get_cell_spot_id_from_row_col(sos_indexes[2][0], sos_indexes[2][1])
 
-            print(sos_indexes)
             first_spot_x1, first_spot_y1, first_spot_x2, first_spot_y2 = self.board_canvas.coords(first_spot_id)
             last_spot_x1, last_spot_y1, last_spot_x2, last_spot_y2 = self.board_canvas.coords(last_spot_id)
             

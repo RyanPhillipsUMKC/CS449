@@ -34,7 +34,7 @@ class MovefunctionReturnType(Enum):
     GameIsAlreadyOver = 2
     ValidMove = 3
 
-class GameBoard(object):
+class Game(object):
     def __init__(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
         self.reset(game_type, board_size_x, board_size_y, starting_player_turn)
 
@@ -71,35 +71,13 @@ class GameBoard(object):
         self.soses_by_player[self.turn] += sos_indexes_from_move
 
         # check for win conditons and updates turns + game state
-        # simple game wins on first sos or else turn goes to other player
-        # draw on board full and no sos made
-        if self.game_type == GameType.Simple:
-            if len(sos_indexes_from_move) > 0:
-                self.game_state = GameStateType.Red_Win if self.turn == PlayerType.Red else GameStateType.Blue_Win
-            elif self.are_all_spots_full():
-                self.game_state = GameStateType.Draw
-            else:
-                self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
-        
-        # general game wins on all spots full and winner has most sos's, draw on eaul sos's
-        # if game still ongoing swicth turns to other player iff no sos was made by current player
-        elif self.game_type == GameType.General:
-            # check for game over and who won
-            if self.are_all_spots_full():
-                num_of_sos_for_red = len(self.soses_by_player[PlayerType.Red])
-                num_of_sos_for_blue = len(self.soses_by_player[PlayerType.Blue])
-                if num_of_sos_for_blue == num_of_sos_for_red:
-                    self.game_state = GameStateType.Draw
-                elif num_of_sos_for_blue > num_of_sos_for_red:
-                    self.game_state = GameStateType.Blue_Win
-                else:
-                    self.game_state = GameStateType.Red_Win
-            else: # game still going
-                # in general game player turn only swaps if there was no sos made
-                if len(sos_indexes_from_move) == 0:
-                    self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
+        self._update_game_state()
                     
         return MovefunctionReturnType.ValidMove
+    
+    # virtual funtion for sub classes to override
+    def _update_game_state(self):
+        pass
     
     def are_all_spots_full(self):
         for row in self.state:
@@ -196,76 +174,3 @@ class GameBoard(object):
         return self.soses_this_turn
     def get_soses_by_player(self):
         return self.soses_by_player
-
-
-if __name__ == "__main__":
-    g = GameBoard(GameType.Simple, 8, 8, PlayerType.Blue)
-    
-    g.make_move(BoardSlotType.S, 1, 1)
-    g.make_move(BoardSlotType.O, 1, 2)
-    g.make_move(BoardSlotType.S, 1, 3)
-    g.make_move(BoardSlotType.O, 1, 4)
-    g.make_move(BoardSlotType.S, 1, 5)
-
-    g.make_move(BoardSlotType.S, 2, 1)
-    g.make_move(BoardSlotType.O, 2, 2)
-    g.make_move(BoardSlotType.S, 2, 3)
-
-    g.make_move(BoardSlotType.S, 4, 3)
-    g.make_move(BoardSlotType.O, 4, 4)
-    g.make_move(BoardSlotType.S, 4, 5)
-
-    g.make_move(BoardSlotType.S, 0, 4)
-    g.make_move(BoardSlotType.S, 2, 4)
-
-    g.make_move(BoardSlotType.S, 7, 7)
-    g.make_move(BoardSlotType.O, 6, 7)
-    g.make_move(BoardSlotType.S, 5, 7)
-
-    g.make_move(BoardSlotType.S, 0, 7)
-    g.make_move(BoardSlotType.O, 1, 6)
-    g.make_move(BoardSlotType.S, 2, 5)
-
-    g.make_move(BoardSlotType.S, 0, 7)
-    g.make_move(BoardSlotType.O, 1, 6)
-    g.make_move(BoardSlotType.S, 2, 5)
-    
-    g.make_move(BoardSlotType.S, 7, 7)
-    g.make_move(BoardSlotType.O, 6, 6)
-    g.make_move(BoardSlotType.S, 5, 5)
-
-    g.make_move(BoardSlotType.S, 7, 0)
-    g.make_move(BoardSlotType.O, 6, 1)
-    g.make_move(BoardSlotType.S, 5, 2)
-
-    g.make_move(BoardSlotType.O, 7, 6)
-    g.make_move(BoardSlotType.S, 7, 5)
-
-    for x in g.state:
-        for y in x:
-            if (y == BoardSlotType.S):
-                print("S    ", end=", ")
-            elif y == BoardSlotType.O:
-                print("O    ", end=", ")
-            else:
-                print("Empty", end=", ")
-        print("\n", end="")
-
-    print()
-
-    state = tuple()
-    for x in range(g.size_x):
-        for y in range(g.size_y):
-            current_state = g.check_for_sos_from_move(g.state[x][y], x, y)
-            state += current_state
-            print(len(current_state), end=", ")
-        print("\n", end="")
-
-    print(state)
-    # have to divide by 3 because the moves are pre-set 
-    # before checking the sos conditioins; in in real game they are checkedon the spot thats why its tripeled here
-    print(f" Total SOS's = {int(len(state) / 3)}")
-
-    print(f"Game State = {g.game_state}")
-    print(f"Number of Red SOS's = {g.soses_by_player[PlayerType.Red]}")
-    print(f"Number of Blue SOS's = {g.soses_by_player[PlayerType.Blue]}")

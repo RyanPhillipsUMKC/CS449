@@ -1,18 +1,20 @@
 '''
 Ryan Phillips 
 UMKC CS 449 Sprint 3 Tests
-Tests.py
+TestsGame.py
+
+Tests for the Game base class
 '''
 import unittest
 
 from Game import *
-        
+
 
 # Test if board dims, game mode, and starting player turn can be configured, and initialized properly with empty board
 # AC 1.* - 3.*
 class TestGameInit(unittest.TestCase):
     def setUp(self):
-       self.game = GameBoard(GameType.Simple, 5, 5, PlayerType.Red)
+       self.game = Game(GameType.Simple, 5, 5, PlayerType.Red)
     def tearDown(self):
         self.game = None # allow gc to clean up
 
@@ -80,7 +82,7 @@ class TestGameInit(unittest.TestCase):
 # AC 4.1 - 4.*, AC 6.1 - 6.*
 class TestGameMoves(unittest.TestCase):
     def setUp(self):
-       self.game = GameBoard(GameType.Simple, 5, 5, PlayerType.Red)
+       self.game = Game(GameType.Simple, 5, 5, PlayerType.Red)
     def tearDown(self):
         self.game = None # allow gc to clean up
     
@@ -124,7 +126,6 @@ class TestGameMoves(unittest.TestCase):
         # try to move on invalid row
         self.assertEqual(self.game.make_move(BoardSlotType.O, 5, 100), MovefunctionReturnType.InvalidSpot)
         self.assertEqual(self.game.get_turn(), PlayerType.Red)
-
 
     # AC 6.1 test making and move and swithing turn - general game
     def test_general_game_valid_moves(self):
