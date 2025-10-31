@@ -25,3 +25,6 @@ class GeneralGame(Game):
             # in general game player turn only swaps if there was no sos made
             if len(self.soses_this_turn) == 0:
                 self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
+
+    def get_game_type(self):
+        return GameType.General

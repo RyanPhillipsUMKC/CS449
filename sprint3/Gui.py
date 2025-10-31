@@ -211,9 +211,9 @@ class App(tk.Tk):
 
         # only allocate the game once
         if game_mode == GameType.Simple:
-            self.game_board = SimpleGame(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
+            self.game_board = SimpleGame(board_dims[0], board_dims[1], PlayerType.Red)
         else:
-            self.game_board = GeneralGame(game_mode, board_dims[0], board_dims[1], PlayerType.Red)
+            self.game_board = GeneralGame(board_dims[0], board_dims[1], PlayerType.Red)
         
         self.game_state_current_game_mode.configure(text=f"Current Game Mode: {game_mode.name}")
         self.game_state_current_board_size.configure(text=f"Current Board Size: {board_dims[0]}x{board_dims[1]}")

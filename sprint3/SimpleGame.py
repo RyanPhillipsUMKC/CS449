@@ -16,3 +16,6 @@ class SimpleGame(Game):
             self.game_state = GameStateType.Draw
         else:
             self.turn = PlayerType.Red if self.turn == PlayerType.Blue else PlayerType.Blue
+
+    def get_game_type(self):
+        return GameType.Simple

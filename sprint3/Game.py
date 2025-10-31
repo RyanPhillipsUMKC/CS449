@@ -35,11 +35,10 @@ class MovefunctionReturnType(Enum):
     ValidMove = 3
 
 class Game(object):
-    def __init__(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
-        self.reset(game_type, board_size_x, board_size_y, starting_player_turn)
+    def __init__(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
+        self.reset(board_size_x, board_size_y, starting_player_turn)
 
-    def reset(self, game_type: GameType, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
-        self.game_type = game_type
+    def reset(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
         # keep board in a valid size (sos can be made in either direction so >= 3)
         self.size_x = board_size_x if board_size_x >= 3 else 3
         self.size_y = board_size_y if board_size_y >= 3 else 3
@@ -75,8 +74,10 @@ class Game(object):
                     
         return MovefunctionReturnType.ValidMove
     
-    # virtual funtion for sub classes to override
+    # virtual funtions for sub classes to override
     def _update_game_state(self):
+        pass
+    def get_game_type(self):
         pass
     
     def are_all_spots_full(self):
@@ -168,8 +169,6 @@ class Game(object):
         return self.size_y
     def get_game_state(self):
         return self.game_state
-    def get_game_type(self):
-        return self.game_type
     def get_soses_this_turn(self):
         return self.soses_this_turn
     def get_soses_by_player(self):
