@@ -48,6 +48,11 @@ class TestGameInit(unittest.TestCase):
         self.game.reset(1, 1, PlayerType.Red)
         self.assertEqual(self.game.get_board_size_x(), 3)
         self.assertEqual(self.game.get_board_size_y(), 3)
+    
+    # AC 2.1 Game mode config
+    def test_game_mode_configs(self):
+        self.assertEqual(self.game.get_game_type(), None)
+        self.assertEqual(isinstance(self.game, Game), True)
 
     # AC Other starting player turn config
     def test_starting_player_turn_configs(self):
@@ -71,6 +76,7 @@ class TestGameInit(unittest.TestCase):
 
 
 # Test if SOS's are made when moves are made
+# These applt to AC 5.1, 5.1, 7.1, 7.2 - a simple game is over, and a general game is over
 class TestGameSOSMadeConditions(unittest.TestCase):
     def setUp(self):
        self.game = Game(5, 5, PlayerType.Red)

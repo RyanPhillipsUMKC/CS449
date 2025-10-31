@@ -20,6 +20,19 @@ class TestGeneralGame(unittest.TestCase):
         self.assertEqual(self.game.get_game_type(), GameType.General)
         self.assertEqual(isinstance(self.game, GeneralGame), True)
 
+    # AC 3.1 Board dims, game mode, strting player turn, empty board
+    def test_full_config(self):
+          self.game.reset(10, 15, PlayerType.Red)
+          self.assertEqual(self.game.get_board_size_x(), 10)
+          self.assertEqual(self.game.get_board_size_y(), 15)
+          self.assertEqual(self.game.get_game_type(), GameType.General)
+          self.assertEqual(isinstance(self.game, GeneralGame), True)
+          self.assertEqual(self.game.get_turn(), PlayerType.Red)
+
+          for row in range(self.game.get_board_size_x()):
+            for col in range(self.game.get_board_size_y()):
+                self.assertEqual(self.game.get_slot_type_for_spot(row, col), BoardSlotType.Empty)
+
     # AC 6.1 test making and move and swithing turn - general game
     def test_general_game_valid_moves(self):
         self.game.reset(10, 15, PlayerType.Red)
@@ -90,7 +103,7 @@ class TestGeneralGame(unittest.TestCase):
         self.assertEqual(self.game.game_state, GameStateType.Blue_Win)
 
     # AC 7.1 - game is one by plater with most soses on board full
-    def test_game_win_on_board_full_blue_had_most_soses(self):
+    def test_game_win_on_board_full_Red_had_most_soses(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 0, 0)

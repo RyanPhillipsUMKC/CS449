@@ -20,6 +20,19 @@ class TestSimpleGame(unittest.TestCase):
         self.assertEqual(self.game.get_game_type(), GameType.Simple)
         self.assertEqual(isinstance(self.game, SimpleGame), True)
 
+    # AC 3.1 Board dims, game mode, strting player turn, empty board
+    def test_full_config(self):
+          self.game.reset(10, 15, PlayerType.Red)
+          self.assertEqual(self.game.get_board_size_x(), 10)
+          self.assertEqual(self.game.get_board_size_y(), 15)
+          self.assertEqual(self.game.get_game_type(), GameType.Simple)
+          self.assertEqual(isinstance(self.game, SimpleGame), True)
+          self.assertEqual(self.game.get_turn(), PlayerType.Red)
+
+          for row in range(self.game.get_board_size_x()):
+            for col in range(self.game.get_board_size_y()):
+                self.assertEqual(self.game.get_slot_type_for_spot(row, col), BoardSlotType.Empty)
+
     # AC 4.1 test making and move and swithing turn - simple game
     def test_simple_game_valid_moves(self):
         self.game.reset(10, 15, PlayerType.Red)
@@ -61,6 +74,7 @@ class TestSimpleGame(unittest.TestCase):
         self.assertEqual(self.game.make_move(BoardSlotType.O, 5, 100), MovefunctionReturnType.InvalidSpot)
         self.assertEqual(self.game.get_turn(), PlayerType.Red)
 
+    # AC 5.1 test game won on first sos - red player
     def test_game_win_on_first_sos_made_by_red(self):
         self.game.reset(5, 5, PlayerType.Red)
 
@@ -70,6 +84,7 @@ class TestSimpleGame(unittest.TestCase):
 
         self.assertEqual(self.game.game_state, GameStateType.Red_Win)
 
+    # AC 5.1 test game won on first sos - blue player
     def test_game_win_on_first_sos_made_by_blue(self):
         self.game.reset(5, 5, PlayerType.Blue)
 
@@ -79,6 +94,7 @@ class TestSimpleGame(unittest.TestCase):
 
         self.assertEqual(self.game.game_state, GameStateType.Blue_Win)
 
+    # AC 5.2 test game draw on board full
     def test_game_draw_on_board_full(self):
         self.game.reset(5, 5, PlayerType.Blue)
 
