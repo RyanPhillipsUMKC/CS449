@@ -12,7 +12,6 @@ from Game import *
 from SimpleGame import *
 from GeneralGame import *
 
-# TODO: add game state stats -> or push to next sprint
 
 # GameCellUIParameters
 # We map from the UI canvas element board cell index to these parametrs 
@@ -53,12 +52,49 @@ class App(tk.Tk):
 
         self.style = ttk.Style(self)
         self.style.theme_use("clam")
+        self.style.configure('TFrame', background=self.bg_color)
         self.style.configure('TLabel', relief="flat", borderwidth=0, font=('Helvetica', 22))
-        self.style.configure('TEntry', font=('Helvetica', 16), fieldbackground=self.bg_color, background=self.bg_color, foreground="white", insertcolor="white", justify="left")
-        self.style.configure('Heading.TLabel', relief="flat", borderwidth=0, background=self.bg_color, foreground="white", font=('Helvetica', 32))
-        self.style.configure('FooterInfo.TLabel', relief="flat", borderwidth=0, background=self.bg_color, foreground="white", font=('Helvetica', 16))
-        self.style.configure("TRadiobutton", relief="flat", borderwidth=0, font=('Helvetica', 16, 'bold'), foreground='white', background=self.bg_color)
-        self.style.configure("TCheckbutton", font=('Helvetica', 16, 'bold'), foreground='white', background=self.bg_color)
+        self.style.configure(
+            'TEntry', 
+            font=('Helvetica', 16), 
+            fieldbackground=self.bg_color, 
+            background=self.bg_color, 
+            foreground="white", 
+            insertcolor="white", 
+            justify="left")
+        self.style.configure(
+            'Heading.TLabel', 
+            relief="flat", 
+            borderwidth=0, 
+            background=self.bg_color, 
+            foreground="white", 
+            font=('Helvetica', 32))
+        self.style.configure(
+            'FooterInfo.TLabel', 
+            relief="flat", 
+            borderwidth=0, 
+            background=self.bg_color, 
+            foreground="white", 
+            font=('Helvetica', 16))
+        self.style.configure(
+            "TRadiobutton", 
+            relief="flat", 
+            borderwidth=0, 
+            font=('Helvetica', 16, 'bold'), 
+            foreground='white', 
+            background=self.bg_color)
+        self.style.configure(
+            "TCheckbutton", 
+            font=('Helvetica', 16, 'bold'), 
+            foreground='white', 
+            background=self.bg_color)
+        self.style.configure(
+            'BiggerConfig.TLabel', 
+            relief="flat", 
+            borderwidth=0, 
+            background=self.bg_color, 
+            foreground="white", 
+            font=('Helvetica', 18))
 
 
         # main parent frame
@@ -67,7 +103,9 @@ class App(tk.Tk):
         self.mainframe.rowconfigure(0, weight=0)
         self.mainframe.rowconfigure(1, weight=1)
         self.mainframe.rowconfigure(2, weight=0)
+
         self.mainframe.columnconfigure(0, weight=1)
+
         # remove focus of focused itme when clicking empty space
         self.mainframe.bind_all("<Button-1>", lambda event: event.widget.focus_set())
 
@@ -80,8 +118,8 @@ class App(tk.Tk):
         self.heading = ttk.Label(self.header_frame, text='SOS Game', style='Heading.TLabel').pack(pady=20)
 
         # main content game frame
-        self.main_content_frame = tk.Frame(self.mainframe)
-        self.main_content_frame.grid(row=1, column=0, sticky="nsew", pady=6)
+        self.main_content_frame = ttk.Frame(self.mainframe, style="TFrame")
+        self.main_content_frame.grid(row=1, column=0, sticky="nsew", pady=6, padx=20)
         self.main_content_frame.rowconfigure(0, weight=1)
         self.main_content_frame.columnconfigure([0, 1 ,2], weight=1, uniform="cols")
 
@@ -90,59 +128,214 @@ class App(tk.Tk):
         self.leftside_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1, relief="flat")
         self.leftside_frame.grid(column=0, row=0, sticky="nsew")
 
-        self.game_config_text = ttk.Label(self.leftside_frame, text="Game Configuration", style="FooterInfo.TLabel", relief="flat")
-        self.game_config_text.grid(row=0, column=0, sticky="w", pady=15)
+        self.game_config_text = ttk.Label(
+            self.leftside_frame, 
+            text="Game Configuration", 
+            style="BiggerConfig.TLabel", 
+            relief="flat")
+        self.game_config_text.grid(row=0, column=0, sticky="w", pady=5)
 
         # Board size config
         validate_callback = self.register(self.validate_board_size_entry)
-        self.board_size_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0)
+        self.board_size_config_frame = ttk.Frame(
+            self.leftside_frame, relief="flat", borderwidth=0, style="TFrame")
         self.board_size_config_frame.grid(row=1, column=0, sticky="w", pady=5)
-        self.board_size_config_text = ttk.Label(self.board_size_config_frame, text="Board size: ", style="FooterInfo.TLabel", relief="flat")
+        self.board_size_config_text = ttk.Label(
+            self.board_size_config_frame, 
+            text="Board size: ", 
+            style="FooterInfo.TLabel", 
+            relief="flat")
         self.board_size_config_text.grid(column=0, row=0, sticky="nsw")
         self.board_size_config_selection_x = tk.IntVar(value=self.default_board_dims)
-        self.board_size_config_entry_x = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_x, style="TEntry", width=5, validate='key', validatecommand=(validate_callback, '%P'))
+        self.board_size_config_entry_x = ttk.Entry(
+            self.board_size_config_frame, 
+            textvariable=self.board_size_config_selection_x, 
+            style="TEntry", 
+            width=5, 
+            validate='key', 
+            validatecommand=(validate_callback, '%P'))
         self.board_size_config_entry_x.grid(column=1, row=0, sticky="w")
-        self.board_size_config_text_seperator = ttk.Label(self.board_size_config_frame, text="x", style="FooterInfo.TLabel", relief="flat")
+        self.board_size_config_text_seperator = ttk.Label(
+            self.board_size_config_frame, text="x", style="FooterInfo.TLabel", relief="flat")
         self.board_size_config_text_seperator.grid(column=2, row=0, sticky="nsw")
         self.board_size_config_selection_y = tk.IntVar(value=self.default_board_dims)
-        self.board_size_config_entry_y = ttk.Entry(self.board_size_config_frame, textvariable=self.board_size_config_selection_y, style="TEntry", width=5, validate='key', validatecommand=(validate_callback, '%P'))
+        self.board_size_config_entry_y = ttk.Entry(
+            self.board_size_config_frame, 
+            textvariable=self.board_size_config_selection_y, 
+            style="TEntry", 
+            width=5, 
+            validate='key', 
+            validatecommand=(validate_callback, '%P'))
         self.board_size_config_entry_y.grid(column=3, row=0, sticky="w")
-
+        
         # Game mode config
-        self.game_mode_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0)
-        self.game_mode_config_frame.grid(row=2, column=0, sticky="w", pady=5)
-        self.game_mode_config_text = ttk.Label(self.game_mode_config_frame, text="Game Mode: ", style="FooterInfo.TLabel", relief="flat")
+        self.game_mode_config_frame = ttk.Frame(
+            self.leftside_frame, relief="flat", borderwidth=0, style="TFrame")
+        self.game_mode_config_frame.grid(row=2, column=0, sticky="w", pady=(0, 5))
+        self.game_mode_config_text = ttk.Label(
+            self.game_mode_config_frame, text="Game Mode: ", style="FooterInfo.TLabel", relief="flat")
         self.game_mode_config_text.grid(column=0, row=1, sticky="nsw")
         self.game_mode_config_selection = tk.IntVar(self.game_mode_config_frame, 1)
-        self.game_mode_config_button_simple_game = ttk.Radiobutton(self.game_mode_config_frame, text='Simple', value=1, variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
+        self.game_mode_config_button_simple_game = ttk.Radiobutton(
+            self.game_mode_config_frame, 
+            text='Simple', 
+            value=1, 
+            variable=self.game_mode_config_selection, 
+            takefocus=0, 
+            style="TRadiobutton")
         self.game_mode_config_button_simple_game.grid(column=1, row=1, sticky="w")
-        self.game_mode_config_button_general_game = ttk.Radiobutton(self.game_mode_config_frame, text='General', value=2, variable=self.game_mode_config_selection, takefocus=0, style="TRadiobutton")
+        self.game_mode_config_button_general_game = ttk.Radiobutton(
+            self.game_mode_config_frame, 
+            text='General', 
+            value=2, 
+            variable=self.game_mode_config_selection, 
+            takefocus=0, 
+            style="TRadiobutton")
         self.game_mode_config_button_general_game.grid(column=2, row=1, sticky="w")
 
         # Red Player Current Config
-        self.red_player_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0)
-        self.red_player_config_frame.grid(row=3, column=0, sticky="w", pady=5)
-        self.red_player_config_text = ttk.Label(self.red_player_config_frame, text="Red Player: ", style="FooterInfo.TLabel", relief="flat")
+        self.red_player_config_frame = ttk.Frame(
+            self.leftside_frame, relief="flat", borderwidth=0, style="TFrame")
+        self.red_player_config_frame.grid(row=3, column=0, sticky="w", pady=20)
+
+        self.red_player_config_text = ttk.Label(
+            self.red_player_config_frame, 
+            text="Red Player Config:", 
+            style="BiggerConfig.TLabel", 
+            relief="flat", 
+            foreground="red")
         self.red_player_config_text.grid(column=0, row=1, sticky="nsw")
-        self.red_player_config_selection = tk.IntVar(self.red_player_config_frame, 1)
-        self.red_player_config_button_S = ttk.Radiobutton(self.red_player_config_frame, text='S', value=1, variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
-        self.red_player_config_button_S.grid(column=1, row=1, sticky="w")
-        self.red_player_config_button_O = ttk.Radiobutton(self.red_player_config_frame, text='O', value=2, variable=self.red_player_config_selection, takefocus=0, style="TRadiobutton")
-        self.red_player_config_button_O.grid(column=2, row=1, sticky="w")
+        # Human or Compuyter
+        self.red_player_config_human_or_computer_frame = ttk.Frame(self.red_player_config_frame)
+        self.red_player_config_human_or_computer_frame.grid(row=2, column=0, sticky="w")
+        self.red_player_config_text_human_or_computer = ttk.Label(
+            self.red_player_config_human_or_computer_frame, 
+            text="Player Type: ", 
+            style="FooterInfo.TLabel", 
+            relief="flat")
+        self.red_player_config_text_human_or_computer.grid(column=0, row=2, sticky="nsw")
+        self.red_player_config_selection_human_or_computer = tk.IntVar(
+            self.red_player_config_human_or_computer_frame, 1)
+        self.red_player_config_button_human = ttk.Radiobutton(
+            self.red_player_config_human_or_computer_frame, 
+            text='Human', 
+            value=1, 
+            variable=self.red_player_config_selection_human_or_computer, 
+            takefocus=0, 
+            style="TRadiobutton")
+        self.red_player_config_button_human.grid(column=1, row=2, sticky="w")
+        self.red_player_config_button_computer = ttk.Radiobutton(self.red_player_config_human_or_computer_frame, text='Computer', value=2, variable=self.red_player_config_selection_human_or_computer, takefocus=0, style="TRadiobutton")
+        self.red_player_config_button_computer.grid(column=2, row=2, sticky="w")
+        # Slot choice
+        self.red_player_config_slot_choice_frame = ttk.Frame(self.red_player_config_frame)
+        self.red_player_config_slot_choice_frame.grid(row=3, column=0, sticky="W")
+        self.red_player_config_text_slot_choice = ttk.Label(
+            self.red_player_config_slot_choice_frame, 
+            text="Move Type: ", 
+            style="FooterInfo.TLabel", 
+            relief="flat")
+        self.red_player_config_text_slot_choice.grid(column=0, row=3, sticky="nsw")
+        self.red_player_config_selection = tk.IntVar(self.red_player_config_slot_choice_frame, 1)
+        self.red_player_config_button_S = ttk.Radiobutton(
+            self.red_player_config_slot_choice_frame, 
+            text='S', 
+            value=1, 
+            variable=self.red_player_config_selection, 
+            takefocus=0, 
+            style="TRadiobutton")
+        self.red_player_config_button_S.grid(column=1, row=3, sticky="w")
+        self.red_player_config_button_O = ttk.Radiobutton(
+            self.red_player_config_slot_choice_frame, 
+            text='O', 
+            value=2, 
+            variable=self.red_player_config_selection, 
+            takefocus=0, 
+            style="TRadiobutton")
+        self.red_player_config_button_O.grid(column=2, row=3, sticky="w")
         
         # Blue Player Current Config
-        self.blue_player_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0)
+        self.blue_player_config_frame = ttk.Frame(self.leftside_frame, relief="flat", borderwidth=0, style="TFrame")
         self.blue_player_config_frame.grid(row=4, column=0, sticky="w", pady=5)
-        self.blue_player_config_text = ttk.Label(self.blue_player_config_frame, text="Blue Player: ", style="FooterInfo.TLabel", relief="flat")
+
+        self.blue_player_config_text = ttk.Label(
+            self.blue_player_config_frame,
+            text="Blue Player Config:",
+            style="BiggerConfig.TLabel",
+            relief="flat",
+            foreground="blue")
         self.blue_player_config_text.grid(column=0, row=1, sticky="nsw")
-        self.blue_player_config_selection = tk.IntVar(self.blue_player_config_frame, 1)
-        self.blue_player_config_button_S = ttk.Radiobutton(self.blue_player_config_frame, text='S', value=1, variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
-        self.blue_player_config_button_S.grid(column=1, row=1, sticky="w")
-        self.blue_player_config_button_O = ttk.Radiobutton(self.blue_player_config_frame, text='O', value=2, variable=self.blue_player_config_selection, takefocus=0, style="TRadiobutton")
-        self.blue_player_config_button_O.grid(column=2, row=1, sticky="w")
+
+        # Human or Computer
+        self.blue_player_config_human_or_computer_frame = ttk.Frame(self.blue_player_config_frame)
+        self.blue_player_config_human_or_computer_frame.grid(row=2, column=0, sticky="w")
+
+        self.blue_player_config_text_human_or_computer = ttk.Label(
+            self.blue_player_config_human_or_computer_frame,
+            text="Player Type: ",
+            style="FooterInfo.TLabel",
+            relief="flat")
+        self.blue_player_config_text_human_or_computer.grid(column=0, row=2, sticky="nsw")
+
+        self.blue_player_config_selection_human_or_computer = tk.IntVar(
+            self.blue_player_config_human_or_computer_frame, 1)
+
+        self.blue_player_config_button_human = ttk.Radiobutton(
+            self.blue_player_config_human_or_computer_frame,
+            text='Human',
+            value=1,
+            variable=self.blue_player_config_selection_human_or_computer,
+            takefocus=0,
+            style="TRadiobutton")
+        self.blue_player_config_button_human.grid(column=1, row=2, sticky="w")
+
+        self.blue_player_config_button_computer = ttk.Radiobutton(
+            self.blue_player_config_human_or_computer_frame,
+            text='Computer',
+            value=2,
+            variable=self.blue_player_config_selection_human_or_computer,
+            takefocus=0,
+            style="TRadiobutton")
+        self.blue_player_config_button_computer.grid(column=2, row=2, sticky="w")
+
+        # Slot choice
+        self.blue_player_config_slot_choice_frame = ttk.Frame(self.blue_player_config_frame)
+        self.blue_player_config_slot_choice_frame.grid(row=3, column=0, sticky="w")
+
+        self.blue_player_config_text_slot_choice = ttk.Label(
+            self.blue_player_config_slot_choice_frame,
+            text="Move Type: ",
+            style="FooterInfo.TLabel",
+            relief="flat")
+        self.blue_player_config_text_slot_choice.grid(column=0, row=3, sticky="nsw")
+
+        self.blue_player_config_selection = tk.IntVar(self.blue_player_config_slot_choice_frame, 1)
+
+        self.blue_player_config_button_S = ttk.Radiobutton(
+            self.blue_player_config_slot_choice_frame,
+            text='S',
+            value=1,
+            variable=self.blue_player_config_selection,
+            takefocus=0,
+            style="TRadiobutton")
+        self.blue_player_config_button_S.grid(column=1, row=3, sticky="w")
+
+        self.blue_player_config_button_O = ttk.Radiobutton(
+            self.blue_player_config_slot_choice_frame,
+            text='O',
+            value=2,
+            variable=self.blue_player_config_selection,
+            takefocus=0,
+            style="TRadiobutton")
+        self.blue_player_config_button_O.grid(column=2, row=3, sticky="w")
 
         # Reset game config button
-        self.reset_button = tk.Button(self.leftside_frame, text="Reset Game Button", command=self.reset_game, background=self.bg_color, foreground="White", relief="flat")
+        self.reset_button = tk.Button(
+            self.leftside_frame, 
+            text="Reset Game Button", 
+            command=self.reset_game, 
+            background=self.bg_color, 
+            foreground="White", 
+            relief="flat")
         self.reset_button.grid(row=5, column=0, sticky="w", pady=40)
 
 
@@ -152,7 +345,12 @@ class App(tk.Tk):
 
         # Board Canvas
         board_size = self.get_total_board_draw_size()
-        self.board_canvas = tk.Canvas(self.middle_frame, width=board_size[0], height=board_size[1], bg=self.bg_color, highlightthickness=0)
+        self.board_canvas = tk.Canvas(
+            self.middle_frame, 
+            width=board_size[0], 
+            height=board_size[1], 
+            bg=self.bg_color, 
+            highlightthickness=0)
         self.board_canvas.pack(pady=50)
         #self.board_canvas.grid(row=0, column=0)
         self.board_canvas.bind("<Button-1>", self.on_board_cell_click)
@@ -165,7 +363,8 @@ class App(tk.Tk):
         self.rightside_frame.grid(column=2, row=0, sticky="nsew")
 
         # Game state
-        self.game_state_text = ttk.Label(self.rightside_frame, text="Game State", style="FooterInfo.TLabel", relief="flat")
+        self.game_state_text = ttk.Label(
+            self.rightside_frame, text="Game State:", style="BiggerConfig.TLabel", relief="flat")
         self.game_state_text.grid(row=0, column=0, sticky="w", pady=15)
 
         self.game_state_current_game_mode = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel")
@@ -174,11 +373,24 @@ class App(tk.Tk):
         self.game_state_current_board_size = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel")
         self.game_state_current_board_size.grid(row=2, column=0, sticky="w", pady=5)
 
+        self.game_state_current_red_player_type = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel", foreground="red")
+        self.game_state_current_red_player_type.grid(row=3, column=0, sticky="w", pady=5)
+
+        self.game_state_current_blue_player_type = ttk.Label(self.rightside_frame, text="", style="FooterInfo.TLabel", foreground="blue")
+        self.game_state_current_blue_player_type.grid(row=4, column=0, sticky="w", pady=5)
+
         self.rightside_frame_turn_frame = tk.Frame(self.rightside_frame, bg=self.bg_color, bd=1)
-        self.rightside_frame_turn_frame.grid(column=0, row=3, sticky="nsew")
-        self.game_state_current_turn_text_player_type = ttk.Label(self.rightside_frame_turn_frame, text="", style="FooterInfo.TLabel", foreground="Red")
+        self.rightside_frame_turn_frame.grid(column=0, row=5, sticky="nsew", pady=(50, 0))
+        self.game_state_current_turn_text_player_type = ttk.Label(
+            self.rightside_frame_turn_frame, 
+            text="", 
+            style="FooterInfo.TLabel", 
+            foreground="Red")
         self.game_state_current_turn_text_player_type.grid(row=0, column=0, sticky="w", pady=10)
-        self.game_state_current_turn_text = ttk.Label(self.rightside_frame_turn_frame, text=" player's turn to move", style="FooterInfo.TLabel")
+        self.game_state_current_turn_text = ttk.Label(
+            self.rightside_frame_turn_frame, 
+            text=" player's turn to move", 
+            style="FooterInfo.TLabel")
         self.game_state_current_turn_text.grid(row=0, column=1, sticky="w")
 
 
@@ -187,7 +399,10 @@ class App(tk.Tk):
         self.footer_frame.grid(column=0, row=2, sticky="nsew")
         self.footer_frame.pack_propagate(False)
 
-        self.footer_info = ttk.Label(self.footer_frame, text="Ryan Phillips\nUMKC CS 449\nSprint 2 GUI", style="FooterInfo.TLabel")
+        self.footer_info = ttk.Label(
+            self.footer_frame, 
+            text="Ryan Phillips\nUMKC CS 449\nSprint 4", 
+            style="FooterInfo.TLabel")
         self.footer_info.grid(row=0, column=0)
         
 
@@ -215,8 +430,21 @@ class App(tk.Tk):
         else:
             self.game_board = GeneralGame(board_dims[0], board_dims[1], PlayerType.Red)
         
-        self.game_state_current_game_mode.configure(text=f"Current Game Mode: {game_mode.name}")
-        self.game_state_current_board_size.configure(text=f"Current Board Size: {board_dims[0]}x{board_dims[1]}")
+        self.game_state_current_game_mode.configure(
+            text=f"Current Game Mode: {game_mode.name}")
+        self.game_state_current_board_size.configure(
+            text=f"Current Board Size: {board_dims[0]}x{board_dims[1]}")
+        
+        red_player_type_text = \
+            "Human" if self.red_player_config_selection_human_or_computer.get() == 1 else "Computer"
+        self.game_state_current_red_player_type.configure(
+            text=f"Red Player Type: {red_player_type_text}")
+
+        blue_player_type_text = \
+            "Human" if self.blue_player_config_selection_human_or_computer.get() == 1 else "Computer"
+        self.game_state_current_blue_player_type.configure(
+            text=f"Blue Player Type: {blue_player_type_text}")
+
         self.update_turn_text()
         self._draw_board()
     
@@ -387,11 +615,13 @@ class App(tk.Tk):
         # Vertical lines
         for i in range(1, board_dims[1]):
             x = i * cell_size
-            self.board_canvas.create_line(x, 0, x, total_board_draw_size[0], width=self.board_line_width, fill="White")
+            self.board_canvas.create_line(
+                x, 0, x, total_board_draw_size[0], width=self.board_line_width, fill="White")
         # Horizontal lines
         for i in range(1, board_dims[0]):
             y = i * cell_size
-            self.board_canvas.create_line(0, y, total_board_draw_size[1], y, width=self.board_line_width, fill="White")
+            self.board_canvas.create_line(
+                0, y, total_board_draw_size[1], y, width=self.board_line_width, fill="White")
 
     def on_configure(self, event):
         #print(f"TKinter Configuration event: {event}")
