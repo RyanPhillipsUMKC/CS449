@@ -100,9 +100,12 @@ class App(tk.Tk):
         # main parent frame
         self.mainframe = ttk.Frame(self, style="TFrame")
         self.mainframe.grid(column=0, row=0, sticky="nsew")
-        self.mainframe.rowconfigure(0, weight=0)
-        self.mainframe.rowconfigure(1, weight=1)
-        self.mainframe.rowconfigure(2, weight=0)
+
+        self.mainframe.rowconfigure(0, weight=0)  # header
+        self.mainframe.rowconfigure(1, weight=0)  # header/main separator
+        self.mainframe.rowconfigure(2, weight=1)  # main content
+        self.mainframe.rowconfigure(3, weight=0)  # main/footer separator
+        self.mainframe.rowconfigure(4, weight=0)  # footer
 
         self.mainframe.columnconfigure(0, weight=1)
 
@@ -117,11 +120,20 @@ class App(tk.Tk):
 
         self.heading = ttk.Label(self.header_frame, text='SOS Game', style='Heading.TLabel').pack(pady=20)
 
+        # separator under header
+        self.header_separator = ttk.Separator(self.mainframe, orient="horizontal")
+        self.header_separator.grid(row=1, column=0, sticky="ew")
+
         # main content game frame
         self.main_content_frame = ttk.Frame(self.mainframe, style="TFrame")
-        self.main_content_frame.grid(row=1, column=0, sticky="nsew", pady=6, padx=20)
+        self.main_content_frame.grid(row=2, column=0, sticky="nsew", pady=6, padx=20)
         self.main_content_frame.rowconfigure(0, weight=1)
-        self.main_content_frame.columnconfigure([0, 1 ,2], weight=1, uniform="cols")
+
+        # configure columns
+        # 0 = left, 1 = sep, 2 = middle, 3 = sep, 4 = right
+        self.main_content_frame.columnconfigure(0, weight=1, uniform="cols")
+        self.main_content_frame.columnconfigure(2, weight=1, uniform="cols")
+        self.main_content_frame.columnconfigure(4, weight=1, uniform="cols")
 
 
         # left side game config frame
@@ -224,7 +236,13 @@ class App(tk.Tk):
             takefocus=0, 
             style="TRadiobutton")
         self.red_player_config_button_human.grid(column=1, row=2, sticky="w")
-        self.red_player_config_button_computer = ttk.Radiobutton(self.red_player_config_human_or_computer_frame, text='Computer', value=2, variable=self.red_player_config_selection_human_or_computer, takefocus=0, style="TRadiobutton")
+        self.red_player_config_button_computer = ttk.Radiobutton(
+            self.red_player_config_human_or_computer_frame, 
+            text='Computer', 
+            value=2, 
+            variable=self.red_player_config_selection_human_or_computer, 
+            takefocus=0, 
+            style="TRadiobutton")
         self.red_player_config_button_computer.grid(column=2, row=2, sticky="w")
         # Slot choice
         self.red_player_config_slot_choice_frame = ttk.Frame(self.red_player_config_frame)
@@ -338,10 +356,13 @@ class App(tk.Tk):
             relief="flat")
         self.reset_button.grid(row=5, column=0, sticky="w", pady=40)
 
+        # vertical separator between left and middle
+        self.sep_left_middle = ttk.Separator(self.main_content_frame, orient="vertical")
+        self.sep_left_middle.grid(row=0, column=1, sticky="ns", padx=10)
 
         # Center game frame
         self.middle_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1)
-        self.middle_frame.grid(column=1, row=0, sticky="nsew")
+        self.middle_frame.grid(column=2, row=0, sticky="nsew")
 
         # Board Canvas
         board_size = self.get_total_board_draw_size()
@@ -357,10 +378,13 @@ class App(tk.Tk):
         self.board_canvas.bind("<Motion>", self.on_board_hover_motion)
         self.board_canvas.bind("<Leave>", self.on_board_mouse_leave_event)
 
+        # vertical separator between middle and right
+        self.sep_middle_right = ttk.Separator(self.main_content_frame, orient="vertical")
+        self.sep_middle_right.grid(row=0, column=3, sticky="ns", padx=10)
 
         # right side game frame
         self.rightside_frame = tk.Frame(self.main_content_frame, bg=self.bg_color, bd=1)
-        self.rightside_frame.grid(column=2, row=0, sticky="nsew")
+        self.rightside_frame.grid(column=4, row=0, sticky="nsew")
 
         # Game state
         self.game_state_text = ttk.Label(
@@ -393,10 +417,13 @@ class App(tk.Tk):
             style="FooterInfo.TLabel")
         self.game_state_current_turn_text.grid(row=0, column=1, sticky="w")
 
+        # separator above footer
+        self.footer_separator = ttk.Separator(self.mainframe, orient="horizontal")
+        self.footer_separator.grid(row=3, column=0, sticky="ew")
 
         # footer frame
         self.footer_frame = tk.Frame(self.mainframe, bg=self.bg_color, bd=1, height=75)
-        self.footer_frame.grid(column=0, row=2, sticky="nsew")
+        self.footer_frame.grid(column=0, row=4, sticky="nsew")
         self.footer_frame.pack_propagate(False)
 
         self.footer_info = ttk.Label(
