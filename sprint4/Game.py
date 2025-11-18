@@ -2,7 +2,7 @@
 Ryan Phillips 
 UMKC CS 449 Sprint 4
 Game.py
-Implements the game and board backend
+Implements the game and board backend base class
 '''
 from enum import Enum
 from collections import defaultdict
@@ -34,6 +34,15 @@ class MovefunctionReturnType(Enum):
     GameIsAlreadyOver = 2
     ValidMove = 3
 
+class MoveFunctionReturnData():
+    def __init__(self):
+        self.type = MovefunctionReturnType.InvalidSpot
+        self.row = -1
+        self.col = -1
+        self.slot_type = BoardSlotType.Empty
+        self.soses_made = tuple()
+
+
 class Game(object):
     def __init__(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
         self.reset(board_size_x, board_size_y, starting_player_turn)
@@ -51,31 +60,41 @@ class Game(object):
         self.soses_by_player = defaultdict(tuple)
         self.game_state = GameStateType.Ongoing
 
-    def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MovefunctionReturnType:
+    def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MoveFunctionReturnData:
+        return_data = MoveFunctionReturnData()
+        return_data.type = MovefunctionReturnType.ValidMove
+        return_data.row = row
+        return_data.col = col
+        return_data.slot_type = slot_type
+
         if row >= self.size_x:
-            return MovefunctionReturnType.InvalidSpot
+            return_data.type = MovefunctionReturnType.InvalidSpot
+            return return_data
         if col >= self.size_y:
-            return MovefunctionReturnType.InvalidSpot
+            return_data.type = MovefunctionReturnType.InvalidSpot
+            return return_data
         if self.state[row][col] != BoardSlotType.Empty:
-            return MovefunctionReturnType.SpotAlreadyTaken
+            return_data.type = MovefunctionReturnType.SpotAlreadyTaken
+            return return_data
         if self.game_state != GameStateType.Ongoing:
-            return MovefunctionReturnType.GameIsAlreadyOver
+            return_data.type = MovefunctionReturnType.GameIsAlreadyOver
+            return return_data
         
         # make move
         self.state[row][col] = slot_type
 
         # check for sos's and then cache them so ui know wheres to draw
         sos_indexes_from_move = self.check_for_sos_from_move(slot_type, row, col)
-        self.soses_this_turn = sos_indexes_from_move
+        return_data.soses_made = sos_indexes_from_move
         self.soses_by_player[self.turn] += sos_indexes_from_move
 
         # check for win conditons and updates turns + game state
-        self._update_game_state()
+        self._update_game_state(return_data)
                     
-        return MovefunctionReturnType.ValidMove
+        return return_data
     
     # virtual funtions for sub classes to override
-    def _update_game_state(self):
+    def _update_game_state(self, move_function_return_data):
         pass
     def get_game_type(self):
         pass
@@ -169,7 +188,5 @@ class Game(object):
         return self.size_y
     def get_game_state(self):
         return self.game_state
-    def get_soses_this_turn(self):
-        return self.soses_this_turn
     def get_soses_by_player(self):
         return self.soses_by_player

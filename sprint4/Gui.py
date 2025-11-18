@@ -111,6 +111,7 @@ class App(tk.Tk):
 
         # remove focus of focused itme when clicking empty space
         self.mainframe.bind_all("<Button-1>", lambda event: event.widget.focus_set())
+        self.bind("<Button-3>", self.on_right_mouse_button_click_auto_play)
 
 
         # header frame
@@ -452,10 +453,13 @@ class App(tk.Tk):
         game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General  
 
         # only allocate the game once
+        red_is_computer = self.red_player_config_selection_human_or_computer.get() == 2
+        blue_is_computer = self.blue_player_config_selection_human_or_computer.get() == 2
+        
         if game_mode == GameType.Simple:
-            self.game_board = SimpleGame(board_dims[0], board_dims[1], PlayerType.Red)
+            self.game_board = SimpleGame(board_dims[0], board_dims[1], PlayerType.Red, red_is_computer, blue_is_computer)
         else:
-            self.game_board = GeneralGame(board_dims[0], board_dims[1], PlayerType.Red)
+            self.game_board = GeneralGame(board_dims[0], board_dims[1], PlayerType.Red, red_is_computer, blue_is_computer)
         
         self.game_state_current_game_mode.configure(
             text=f"Current Game Mode: {game_mode.name}")
@@ -509,50 +513,52 @@ class App(tk.Tk):
         for id in self.canvas_board_cell_index_to_params:
              self.board_canvas.itemconfigure(id, fill=self.bg_color)
 
-    def on_board_cell_click(self, event) -> None:
-        #print(f"Canvas clicked on event {event}, {event.widget}")
-
+    def on_board_cell_click(self, event) -> None:        
         closest_cell_id = self._get_closest_cell_spot_index_from_event(event)
-
         # invalid click spot... ignore
         if closest_cell_id == -1:
             return
-        
         cell_params = self.canvas_board_cell_index_to_params[closest_cell_id]
+        self._make_game_move_from_cell_params(cell_params)
 
+    def on_right_mouse_button_click_auto_play(self, event):
+        if not self.game_board.is_computers_turn():
+            return
+        return self._make_game_move_from_cell_params(GameCellUIParameters())
+        
+    def _make_game_move_from_cell_params(self, cell_params):
         # try to update game state
         turn = self.game_board.get_turn()
         turn_slot_type = BoardSlotType.Empty
-        turn_text = ""
 
         if turn == PlayerType.Red:
             if self.red_player_config_selection.get() == 1:
                 turn_slot_type = BoardSlotType.S
-                turn_text = "S"
             else:
                 turn_slot_type = BoardSlotType.O
-                turn_text = "O"
         else:
             if self.blue_player_config_selection.get() == 1:
                 turn_slot_type = BoardSlotType.S
-                turn_text = "S"
             else:
                 turn_slot_type = BoardSlotType.O
-                turn_text = "O"
 
-        move_function_return_type = self.game_board.make_move(
+        move_function_return_data = self.game_board.make_move(
             turn_slot_type, cell_params.row, cell_params.col)
         
-        if move_function_return_type != MovefunctionReturnType.ValidMove:
+        # get updates params beacuse auto adjust may selected a move (now in the move return data)
+        cell_params = self.canvas_board_cell_index_to_params[
+            self._get_cell_spot_id_from_row_col(move_function_return_data.row, move_function_return_data.col)]
+        
+        if move_function_return_data.type != MovefunctionReturnType.ValidMove:
             # TODO: could display popups here ??
-            print("Failied move!!!!")
+            print("Failed move!!!!")
             return
 
         # update cell ui state
-        self.board_canvas.itemconfigure(cell_params.text_canvas_index, text=turn_text)
+        self.board_canvas.itemconfigure(cell_params.text_canvas_index, text="S" if move_function_return_data.slot_type == BoardSlotType.S else "O")
 
         # update sos's made lines
-        self._update_sos_lines(turn)
+        self._update_sos_lines(turn, move_function_return_data.soses_made)
 
         # check and display game state iff needed
         new_game_state = self.game_board.get_game_state()
@@ -568,8 +574,7 @@ class App(tk.Tk):
             self._clear_hover_state()
             self.update_turn_text()
     
-    def _update_sos_lines(self, turn):
-        soses_indexes = self.game_board.get_soses_this_turn()
+    def _update_sos_lines(self, turn, soses_indexes):
         for sos_indexes in soses_indexes:
             first_spot_id = self._get_cell_spot_id_from_row_col(sos_indexes[0][0], sos_indexes[0][1])
             last_spot_id = self._get_cell_spot_id_from_row_col(sos_indexes[2][0], sos_indexes[2][1])

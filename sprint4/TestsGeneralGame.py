@@ -54,7 +54,7 @@ class TestGeneralGame(unittest.TestCase):
         self.assertEqual(self.game.get_turn(), PlayerType.Blue)
 
         # try to move on spot already taken
-        self.assertEqual(self.game.make_move(BoardSlotType.O, 1, 1), MovefunctionReturnType.SpotAlreadyTaken)
+        self.assertEqual(self.game.make_move(BoardSlotType.O, 1, 1).type, MovefunctionReturnType.SpotAlreadyTaken)
         self.assertEqual(self.game.get_slot_type_for_spot(1, 1), BoardSlotType.S)
         self.assertEqual(self.game.get_turn(), PlayerType.Blue)
 
@@ -63,7 +63,7 @@ class TestGeneralGame(unittest.TestCase):
         self.game.reset(10, 15, PlayerType.Red)
 
         # try to move on invalid row
-        self.assertEqual(self.game.make_move(BoardSlotType.O, 20, 1), MovefunctionReturnType.InvalidSpot)
+        self.assertEqual(self.game.make_move(BoardSlotType.O, 20, 1).type, MovefunctionReturnType.InvalidSpot)
         self.assertEqual(self.game.get_turn(), PlayerType.Red)
 
     # AC 6.4 test invalid move - invalid column index - general game
@@ -71,7 +71,7 @@ class TestGeneralGame(unittest.TestCase):
         self.game.reset(10, 15, PlayerType.Red)
 
         # try to move on invalid row
-        self.assertEqual(self.game.make_move(BoardSlotType.O, 5, 100), MovefunctionReturnType.InvalidSpot)
+        self.assertEqual(self.game.make_move(BoardSlotType.O, 5, 100).type, MovefunctionReturnType.InvalidSpot)
         self.assertEqual(self.game.get_turn(), PlayerType.Red)
 
     # AC 7.1 - game does not end until board is full - not a first sos

@@ -88,80 +88,80 @@ class TestGameSOSMadeConditions(unittest.TestCase):
 
         self.game.make_move(BoardSlotType.S, 0, 0)
         self.game.make_move(BoardSlotType.O, 1, 0)
-        self.game.make_move(BoardSlotType.S, 2, 0)
+        return_data = self.game.make_move(BoardSlotType.S, 2, 0)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((2, 0), (1, 0), (0, 0)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((2, 0), (1, 0), (0, 0)))
 
     def test_vertical_down_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 2, 1)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 0, 1)
+        return_data = self.game.make_move(BoardSlotType.S, 0, 1)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((0, 1), (1, 1), (2, 1)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((0, 1), (1, 1), (2, 1)))
 
     def test_horizontal_left_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 0, 0)
         self.game.make_move(BoardSlotType.O, 0, 1)
-        self.game.make_move(BoardSlotType.S, 0, 2)
+        return_data = self.game.make_move(BoardSlotType.S, 0, 2)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((0, 2), (0, 1), (0, 0)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((0, 2), (0, 1), (0, 0)))
     
     def test_horizontal_right_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 1, 0)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 1, 2)
+        return_data = self.game.make_move(BoardSlotType.S, 1, 2)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((1, 2), (1, 1), (1, 0)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((1, 2), (1, 1), (1, 0)))
 
     def test_diagonal_up_and_left_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 0, 0)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 2, 2)
+        return_data = self.game.make_move(BoardSlotType.S, 2, 2)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((2, 2), (1, 1), (0, 0)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((2, 2), (1, 1), (0, 0)))
 
     def test_diagonal_up_and_right_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 0, 2)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 2, 0)
+        return_data = self.game.make_move(BoardSlotType.S, 2, 0)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((2, 0), (1, 1), (0, 2)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((2, 0), (1, 1), (0, 2)))
 
     def test_diagonal_down_and_right_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 2, 2)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 0, 0)
+        return_data = self.game.make_move(BoardSlotType.S, 0, 0)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((0, 0), (1, 1), (2, 2)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((0, 0), (1, 1), (2, 2)))
 
     def test_diagonal_down_and_left_sos_made(self):
         self.game.reset(3, 3, PlayerType.Red)
 
         self.game.make_move(BoardSlotType.S, 0, 2)
         self.game.make_move(BoardSlotType.O, 1, 1)
-        self.game.make_move(BoardSlotType.S, 2, 0)
+        return_data = self.game.make_move(BoardSlotType.S, 2, 0)
 
-        self.assertEqual(len(self.game.get_soses_this_turn()), 1)
-        self.assertEqual(self.game.get_soses_this_turn()[0], ((2, 0), (1, 1), (0, 2)))
+        self.assertEqual(len(return_data.soses_made), 1)
+        self.assertEqual(return_data.soses_made[0], ((2, 0), (1, 1), (0, 2)))
 
 if __name__ == '__main__':
     unittest.main()
