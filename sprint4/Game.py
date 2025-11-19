@@ -139,6 +139,7 @@ class Game(object):
                     SOS_indexes += (((row - 1, col + 1), (row, col), (row + 1, col - 1)),)
 
         # check for sos on S moves
+        # WAITING TO REFACTOR THIS TO BE MORE MODULAR IN SPRINT 5
         elif slot_type == BoardSlotType.S:
             # check for horizontal sos from an S Move
             # check left two slots of us
