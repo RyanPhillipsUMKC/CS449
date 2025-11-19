@@ -60,6 +60,7 @@ class Game(object):
         self.soses_by_player = defaultdict(tuple)
         self.game_state = GameStateType.Ongoing
 
+    # virtual function for overriding (e.g. auto game)
     def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MoveFunctionReturnData:
         return_data = MoveFunctionReturnData()
         return_data.type = MovefunctionReturnType.ValidMove
@@ -96,6 +97,8 @@ class Game(object):
     # virtual funtions for sub classes to override
     def _update_game_state(self, move_function_return_data):
         pass
+
+    # virtual function for testing only
     def get_game_type(self):
         pass
     
