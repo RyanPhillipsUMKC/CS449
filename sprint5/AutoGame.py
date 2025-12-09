@@ -1,6 +1,6 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4
+UMKC CS 449 Sprint 5
 AutoGame.py
 Subclass of game to allow for computer play
 '''
@@ -11,8 +11,8 @@ from Game import *
 
 
 class AutoGame(Game):
-    def __init__(self, board_size_x, board_size_y, starting_player_turn, red_computer=False, blue_computer=False):
-        super().__init__(board_size_x, board_size_y, starting_player_turn)
+    def __init__(self, board_size_x, board_size_y, starting_player_turn, cache_writer, record, red_computer=False, blue_computer=False):
+        super().__init__(board_size_x, board_size_y, starting_player_turn, cache_writer, record)
         self.red_is_computer = red_computer
         self.blue_is_computer = blue_computer
 
@@ -29,11 +29,11 @@ class AutoGame(Game):
             return True
         return False
     
-    def make_move(self, slot_type, row, col):
-        if self.is_computers_turn():
+    def make_move(self, slot_type, row, col, should_record=True, is_replay=False):
+        if not is_replay and self.is_computers_turn():
             auto_row, auto_col, auto_slot_type = self.get_auto_move()
-            return super().make_move(auto_slot_type, auto_row, auto_col)
-        return super().make_move(slot_type, row, col)
+            return super().make_move(auto_slot_type, auto_row, auto_col, should_record)
+        return super().make_move(slot_type, row, col, should_record)
   
     def get_auto_move(self):
         empty_spots = tuple()

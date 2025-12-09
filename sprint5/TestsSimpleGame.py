@@ -1,6 +1,6 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4 Tests
+UMKC CS 449 Sprint 5 Tests
 TestsSimpleGame.py
 
 Tests for the SimpleGame sub class

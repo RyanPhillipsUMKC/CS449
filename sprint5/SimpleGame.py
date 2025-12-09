@@ -1,6 +1,6 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4
+UMKC CS 449 Sprint 5
 SimpleGame.py
 Implements Simple Game backend
 '''

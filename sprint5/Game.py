@@ -1,11 +1,13 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4
+UMKC CS 449 Sprint 5
 Game.py
 Implements the game and board backend base class
 '''
 from enum import Enum
 from collections import defaultdict
+from time import sleep
+
 
 # States that a single slot on the game board can be in
 class BoardSlotType(Enum):
@@ -42,12 +44,102 @@ class MoveFunctionReturnData():
         self.slot_type = BoardSlotType.Empty
         self.soses_made = tuple()
 
+# Sprint 5 Abstract Cache Writer
+# This class is injected into the game by the client so they can chose hwo they cache the game and replay
+# e.g. to a file or to a database ... etc
+class GameCache(object):
+  # virtual function to reset the cache in file database or whatever caching technique
+  def reset(self) -> None:
+      pass
+  # virtual function to write game config headers
+  def write_game_config(self, board_size_x: int, board_size_y: int) -> None:
+      pass
+  # virtual function to get the serialized game config
+  def get_game_config(self) -> tuple:
+      pass
+  # virtual function to write move in a sos game
+  def write_move(self, turn: PlayerType, slot_type: BoardSlotType, row: int, col: int) -> None:
+      pass
+  # virtual function to read the next sos move
+  def get_next_move(self) -> tuple:
+    pass
+
+# Writer that is filed based
+# fileformat =
+# board_size_x, board_size_y, game_mode
+# turn,slot_type,row,col
+# turn,slot_type,row,col
+# ... 
+# eof
+class GameCache_FileBased(object):
+    def __init__(self, file_name="game_cache.txt"):
+        self._reader = None
+        self.file_name= file_name
+
+    def reset(self):
+        self._reader = None
+        open(self.file_name, 'w').close()
+
+    def write_game_config(self, board_size_x, board_size_y, game_type):
+        with open(self.file_name, "a") as f:
+            game_mode_str = "S" if game_type == GameType.Simple else "G"
+            f.write(f"{board_size_x},{board_size_y},{game_mode_str}\n")
+
+    # read first line headers for game config settings
+    def get_game_config(self):
+        try:
+            with open(self.file_name, "r") as f:
+                config_header = f.readline()
+                if not config_header:
+                    return None
+                size_x, size_y, game_mode_str = config_header.strip().split(",")
+                game_mode = GameType.Simple if game_mode_str == "S" else GameType.General
+                return int(size_x), int(size_y), game_mode
+        except FileNotFoundError:
+            return None  # no cache yet
+  
+    def write_move(self, turn, slot_type, row, col):
+        turn_str = "R" if turn == PlayerType.Red else "B"
+        slot_type_str = "S" if slot_type == BoardSlotType.S else "O"
+        with open(self.file_name, "a") as f:
+            f.write(f"{turn_str},{slot_type_str},{row},{col}\n")
+
+    # read move by move with a cached file pointer this is what supplys the generator fro replay functionality
+    def get_next_move(self):
+        # cache an iterator for sequential reading
+        if self._reader is None:
+            try:
+                self._reader = open(self.file_name, "r")
+                self._reader.readline() # skip the game config headers
+            except FileNotFoundError:
+                return None  # no cache yet
+
+        line = self._reader.readline()
+        if not line:
+            return None  # no more moves
+
+        turn_str, slot_type_str, row_str, col_str = line.strip().split(",")
+
+        turn = PlayerType.Red if turn_str == "R" else PlayerType.Blue
+        slot_type = BoardSlotType.S if slot_type_str == "S" else BoardSlotType.O
+        row = int(row_str)
+        col = int(col_str)
+
+        return turn, slot_type, row, col
+  
 
 class Game(object):
-    def __init__(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
-        self.reset(board_size_x, board_size_y, starting_player_turn)
+    def __init__(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType, cache_writer: GameCache, record: bool) -> None:
+        self.reset(board_size_x, board_size_y, starting_player_turn, cache_writer, record)
 
-    def reset(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType) -> None:
+    def reset(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType, cache_writer: GameCache, record: bool) -> None:
+        self.cache_writer = cache_writer
+        self.record = self.cache_writer is not None and record
+        if self.record:
+            self.cache_writer.reset()
+        self.reset_game_state(board_size_x, board_size_y, starting_player_turn)
+    
+    def reset_game_state(self, board_size_x: int, board_size_y: int, starting_player_turn: PlayerType, should_record_override: bool=True):
         # keep board in a valid size (sos can be made in either direction so >= 3)
         self.size_x = board_size_x if board_size_x >= 3 else 3
         self.size_y = board_size_y if board_size_y >= 3 else 3
@@ -60,8 +152,11 @@ class Game(object):
         self.soses_by_player = defaultdict(tuple)
         self.game_state = GameStateType.Ongoing
 
+        if self.cache_writer is not None and self.record and should_record_override:
+            self.cache_writer.write_game_config(board_size_x, board_size_y, self.get_game_type())
+
     # virtual function for overriding (e.g. auto game)
-    def make_move(self, slot_type: BoardSlotType, row: int, col: int) -> MoveFunctionReturnData:
+    def make_move(self, slot_type: BoardSlotType, row: int, col: int, should_record_override: bool=True, is_replay=False) -> MoveFunctionReturnData:
         return_data = MoveFunctionReturnData()
         return_data.type = MovefunctionReturnType.ValidMove
         return_data.row = row
@@ -89,25 +184,43 @@ class Game(object):
         return_data.soses_made = sos_indexes_from_move
         self.soses_by_player[self.turn] += sos_indexes_from_move
 
+        # Sprint 5 write to file
+        if self.cache_writer is not None and self.record and should_record_override:
+            self.cache_writer.write_move(self.get_turn(), slot_type, row, col)
+
         # check for win conditons and updates turns + game state
         self._update_game_state(return_data)
                     
         return return_data
     
-    # virtual funtions for sub classes to override
-    def _update_game_state(self, move_function_return_data):
-        pass
-
-    # virtual function for testing only
-    def get_game_type(self):
-        pass
+    def get_game_config_from_cache_writer(self):
+        if not self.cache_writer:
+            return None
+        return self.cache_writer.get_game_config()
     
+    # Generator to sequentially yield moves from a cache writer
+    def replay_move_from_cache_writer(self):
+        if not self.cache_writer:
+            return None
+        move = self.cache_writer.get_next_move()
+        while move:
+            yield move
+            move = self.cache_writer.get_next_move()
+
+    # is board full?
     def are_all_spots_full(self):
         for row in self.state:
             for col in row:
                 if col == BoardSlotType.Empty:
                     return False
         return True
+    
+    # virtual funtions for sub classes to override
+    def _update_game_state(self, move_function_return_data):
+        pass
+    # virtual function for testing only
+    def get_game_type(self):
+        pass
 
     # check on horizontal, vertical, and dignoal axis's for an sos gicen the current game move
     # this returns a tuple of tuples of all the indexes invloved in the sos's made from the move

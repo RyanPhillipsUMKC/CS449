@@ -1,12 +1,14 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4 GUI
+UMKC CS 449 Sprint 5 GUI
 Language: Python
 GUI Framework: TKinter
 Gui.py
 '''
 import tkinter as tk
 from tkinter import ttk, messagebox
+
+from time import sleep
 
 from Game import *
 from SimpleGame import *
@@ -347,6 +349,16 @@ class App(tk.Tk):
             style="TRadiobutton")
         self.blue_player_config_button_O.grid(column=2, row=3, sticky="w")
 
+        # Record game toggle
+        self.record_game_var = tk.BooleanVar(value=False)  # default: recording off so we dont overwrite wehn not wanted
+        self.record_game_checkbutton = ttk.Checkbutton(
+            self.leftside_frame,
+            text="Record Game",
+            variable=self.record_game_var,
+            style="TCheckbutton"
+        )
+        self.record_game_checkbutton.grid(row=5, column=0, sticky="w", pady=(20, 0))
+
         # Reset game config button
         self.reset_button = tk.Button(
             self.leftside_frame, 
@@ -355,7 +367,7 @@ class App(tk.Tk):
             background=self.bg_color, 
             foreground="White", 
             relief="flat")
-        self.reset_button.grid(row=5, column=0, sticky="w", pady=40)
+        self.reset_button.grid(row=6, column=0, sticky="w", pady=40)
 
         # vertical separator between left and middle
         self.sep_left_middle = ttk.Separator(self.main_content_frame, orient="vertical")
@@ -366,7 +378,7 @@ class App(tk.Tk):
         self.middle_frame.grid(column=2, row=0, sticky="nsew")
 
         # Board Canvas
-        board_size = self.get_total_board_draw_size()
+        board_size = self.get_total_board_draw_size(self.get_entered_board_dims())
         self.board_canvas = tk.Canvas(
             self.middle_frame, 
             width=board_size[0], 
@@ -418,6 +430,18 @@ class App(tk.Tk):
             style="FooterInfo.TLabel")
         self.game_state_current_turn_text.grid(row=0, column=1, sticky="w")
 
+
+        # Play replay button at bottom of right side
+        self.play_replay_button = tk.Button(
+            self.rightside_frame,
+            text="Play Replay",
+            command=self.start_replay,   # implement this method to drive your replay
+            background=self.bg_color,
+            foreground="White",
+            relief="flat"
+        )
+        self.play_replay_button.grid(row=6, column=0, sticky="w", pady=(50, 0))
+
         # separator above footer
         self.footer_separator = ttk.Separator(self.mainframe, orient="horizontal")
         self.footer_separator.grid(row=3, column=0, sticky="ew")
@@ -429,11 +453,10 @@ class App(tk.Tk):
 
         self.footer_info = ttk.Label(
             self.footer_frame, 
-            text="Ryan Phillips\nUMKC CS 449\nSprint 4", 
+            text="Ryan Phillips\nUMKC CS 449\nSprint 5", 
             style="FooterInfo.TLabel")
         self.footer_info.grid(row=0, column=0)
         
-
         # Initialize Game
         self.game_board = None
         self.canvas_board_cell_index_to_params = dict()
@@ -443,23 +466,38 @@ class App(tk.Tk):
         return value == "" or value.isdigit()
 
     def reset_game(self):
-        board_dims = self.get_board_dims()
-
+        board_dims = self.get_entered_board_dims()
         # only allow games with valid dims
         if board_dims[0] <= 2 or board_dims[0] > 10 or board_dims[1] <= 2 or board_dims[1] > 10:
             messagebox.showerror("Invalid Game Config", message="Board dimensions must be > 2 and <= 10")
             return
         
-        game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General  
-
-        # only allocate the game once
+        game_mode = GameType.Simple if self.game_mode_config_selection.get() == 1 else GameType.General
         red_is_computer = self.red_player_config_selection_human_or_computer.get() == 2
         blue_is_computer = self.blue_player_config_selection_human_or_computer.get() == 2
-        
+        should_record = self.record_game_var.get()
+
+        self.reset_game_injected(board_dims, game_mode, red_is_computer, blue_is_computer, should_record)
+
+    def reset_game_injected(self, board_dims, game_mode, red_is_computer, blue_is_computer, should_record):
         if game_mode == GameType.Simple:
-            self.game_board = SimpleGame(board_dims[0], board_dims[1], PlayerType.Red, red_is_computer, blue_is_computer)
+            self.game_board = SimpleGame(
+                board_dims[0], 
+                board_dims[1], 
+                PlayerType.Red,
+                GameCache_FileBased(),
+                should_record,
+                red_is_computer, 
+                blue_is_computer)
         else:
-            self.game_board = GeneralGame(board_dims[0], board_dims[1], PlayerType.Red, red_is_computer, blue_is_computer)
+            self.game_board = GeneralGame(
+                board_dims[0], 
+                board_dims[1], 
+                PlayerType.Red,
+                GameCache_FileBased(),
+                should_record,
+                red_is_computer, 
+                blue_is_computer)
         
         self.game_state_current_game_mode.configure(
             text=f"Current Game Mode: {game_mode.name}")
@@ -488,10 +526,7 @@ class App(tk.Tk):
 
 
     def on_board_hover_motion(self, event):
-        #print(f"Canvas motion event {event}, {event.widget}")
-
         self._clear_hover_state()
-        
         closest_cell_id = self._get_closest_cell_spot_index_from_event(event)
 
         # invalid click spot... ignore
@@ -526,24 +561,28 @@ class App(tk.Tk):
             return
         return self._make_game_move_from_cell_params(GameCellUIParameters())
         
-    def _make_game_move_from_cell_params(self, cell_params):
+    def _make_game_move_from_cell_params(self, cell_params, should_record=True, is_replay=False, override_slot_type=None):
         # try to update game state
         turn = self.game_board.get_turn()
         turn_slot_type = BoardSlotType.Empty
 
-        if turn == PlayerType.Red:
-            if self.red_player_config_selection.get() == 1:
-                turn_slot_type = BoardSlotType.S
+        # allow for slot_type override for things like replay
+        if override_slot_type is None:
+            if turn == PlayerType.Red:
+                if self.red_player_config_selection.get() == 1:
+                    turn_slot_type = BoardSlotType.S
+                else:
+                    turn_slot_type = BoardSlotType.O
             else:
-                turn_slot_type = BoardSlotType.O
+                if self.blue_player_config_selection.get() == 1:
+                    turn_slot_type = BoardSlotType.S
+                else:
+                    turn_slot_type = BoardSlotType.O 
         else:
-            if self.blue_player_config_selection.get() == 1:
-                turn_slot_type = BoardSlotType.S
-            else:
-                turn_slot_type = BoardSlotType.O
+            turn_slot_type = override_slot_type
 
         move_function_return_data = self.game_board.make_move(
-            turn_slot_type, cell_params.row, cell_params.col)
+            turn_slot_type, cell_params.row, cell_params.col, should_record, is_replay)
         
         # get updates params beacuse auto adjust may selected a move (now in the move return data)
         cell_params = self.canvas_board_cell_index_to_params[
@@ -569,10 +608,52 @@ class App(tk.Tk):
                 messagebox.showinfo("Red Wins!", message="The red player has won the game.")
             elif new_game_state == GameStateType.Draw:
                 messagebox.showinfo("Draw!", message="The game ended in a draw.")
-            self.reset_game()
+
+            # Ask if they want to watch the replay
+            if is_replay:
+                messagebox.showinfo("Replay Finished", message="The replay has ended.")
+                self.reset_game()
+            elif self.game_board.record and should_record:
+                watch_replay = messagebox.askyesno(
+                    "Watch Replay?",
+                    "Would you like to watch a replay of the game you just played?")
+                if watch_replay:
+                    self.start_replay()
+                else:
+                    self.reset_game()
+            else:
+                self.reset_game()
+          
         else:
             self._clear_hover_state()
             self.update_turn_text()
+
+    # reset game and start replaying the game saved to disk
+    def start_replay(self):
+        size_x, size_y, game_mode = self.game_board.get_game_config_from_cache_writer()
+
+        self.reset_game_injected((size_x, size_y), game_mode, False, False, False)
+
+        # create, cache, and start the replay generator
+        self._replay_gen = self.game_board.replay_move_from_cache_writer()
+        self._advance_replay_step()
+
+    def _advance_replay_step(self):
+        try:
+            turn, slot_type, row, col = next(self._replay_gen)
+        except StopIteration:
+            print("Replay finished")
+            self._replay_gen = None
+            self.reset_game()
+            return
+
+        move_params = GameCellUIParameters()
+        move_params.row = row
+        move_params.col = col
+        self._make_game_move_from_cell_params(move_params, False, True, slot_type)
+
+        # wait 250 ms for smothher replay animation
+        self.after(250, self._advance_replay_step)
     
     def _update_sos_lines(self, turn, soses_indexes):
         for sos_indexes in soses_indexes:
@@ -616,7 +697,7 @@ class App(tk.Tk):
         self.board_canvas.delete("all")
 
         board_dims = self.get_board_dims()
-        cell_size = self.get_cell_size()
+        cell_size = self.get_cell_size(board_dims)
 
         self.canvas_board_cell_index_to_params = dict()
         # draw board cell and init their params
@@ -643,7 +724,7 @@ class App(tk.Tk):
 
                 self.canvas_board_cell_index_to_params[cell_index] = cell_parameters
 
-        total_board_draw_size = self.get_total_board_draw_size()
+        total_board_draw_size = self.get_total_board_draw_size(board_dims)
         # Vertical lines
         for i in range(1, board_dims[1]):
             x = i * cell_size
@@ -660,15 +741,16 @@ class App(tk.Tk):
         pass
 
     def get_board_dims(self):
+        return (self.game_board.get_board_size_x(), self.game_board.get_board_size_y())
+    
+    def get_entered_board_dims(self):
         return (self.board_size_config_selection_x.get(), self.board_size_config_selection_y.get())
     
-    def get_cell_size(self):
-        board_dims = self.get_board_dims()
+    def get_cell_size(self, board_dims):
         return self.default_board_cell_size * (self.default_board_dims / max(board_dims))
     
-    def get_total_board_draw_size(self):
-        board_dims = self.get_board_dims()
-        cell_size = self.get_cell_size()
+    def get_total_board_draw_size(self, board_dims):
+        cell_size = self.get_cell_size(board_dims)
         return ((cell_size * board_dims[0]), (cell_size * board_dims[1]))
 
 # run main app loop

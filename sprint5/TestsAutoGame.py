@@ -1,6 +1,6 @@
 '''
 Ryan Phillips 
-UMKC CS 449 Sprint 4 Tests
+UMKC CS 449 Sprint 5 Tests
 TestsAutoGame.py
 
 Tests for the AutoGame game subclass
